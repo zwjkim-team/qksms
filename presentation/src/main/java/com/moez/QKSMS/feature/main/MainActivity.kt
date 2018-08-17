@@ -146,12 +146,6 @@ class MainActivity : QkThemedActivity(), MainView, ControllerChangeHandler.Contr
     }
 
     override fun showBackButton(show: Boolean) {
-        // Add or remove the toggle drawer listener based on whether or not we'll enable to drawer
-        when (show) {
-            true -> drawerLayout.removeDrawerListener(toggle)
-            false -> drawerLayout.addDrawerListener(toggle)
-        }
-
         // Animate the toggle icon to the new position
         ObjectAnimator.ofFloat(toggle.drawerArrowDrawable, "progress", if (show) 1f else 0f).start()
 
