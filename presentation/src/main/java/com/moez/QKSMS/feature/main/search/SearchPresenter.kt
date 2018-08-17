@@ -31,6 +31,8 @@ class SearchPresenter @Inject constructor(
         private val conversationRepo: ConversationRepository
 ) : QkPresenter<SearchView, SearchState>(SearchState()) {
 
+    private val defaultConversations by lazy { conversationRepo.getConversationsSnapshot() }
+
     override fun bindIntents(view: SearchView) {
         super.bindIntents(view)
 
@@ -39,13 +41,9 @@ class SearchPresenter @Inject constructor(
                 .map { query -> query.removeAccents() }
                 .doOnNext { newState { copy(loading = true) } }
                 .switchMap { query ->
-                    when (query.length >= 2) {
-                        true -> Observable.just(query)
-                                .observeOn(Schedulers.io())
-                                .map(conversationRepo::searchConversations)
-
-                        false -> Observable.just(listOf())
-                    }
+                    Observable.just(query)
+                            .observeOn(Schedulers.io())
+                            .map(conversationRepo::searchConversations)
                 }
                 .autoDisposable(view.scope())
                 .subscribe { data -> newState { copy(loading = false, data = data) } }

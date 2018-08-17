@@ -62,13 +62,16 @@ class SearchAdapter @Inject constructor(
 
         view.resultsHeader.setVisible(result.messages > 0 && previous?.messages == 0)
 
-        val query = result.query
         val title = SpannableString(result.conversation.getTitle())
-        var index = title.indexOf(query, ignoreCase = true)
 
-        while (index >= 0) {
-            title.setSpan(BackgroundColorSpan(highlightColor), index, index + query.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-            index = title.indexOf(query, index + query.length, true)
+        // Highlight the query matches in the title
+        result.query.takeIf { it.isNotEmpty() }?.let { query ->
+            var index = title.indexOf(query, ignoreCase = true)
+
+            while (index >= 0) {
+                title.setSpan(BackgroundColorSpan(highlightColor), index, index + query.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                index = title.indexOf(query, index + query.length, true)
+            }
         }
         view.title.text = title
 

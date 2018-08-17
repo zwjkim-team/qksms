@@ -84,15 +84,19 @@ class ConversationRepositoryImpl @Inject constructor(
     override fun searchConversations(query: String): List<SearchResult> {
         val conversations = getConversationsSnapshot()
 
-        val messagesByConversation = Realm.getDefaultInstance()
-                .where(Message::class.java)
-                .contains("body", query, Case.INSENSITIVE)
-                .findAll()
-                .groupBy { message -> message.threadId }
-                .filter { (threadId, _) -> conversations.firstOrNull { it.id == threadId } != null }
-                .map { (threadId, messages) -> Pair(conversations.first { it.id == threadId }, messages.size) }
-                .map { (conversation, messages) -> SearchResult(query, conversation, messages) }
-                .sortedByDescending { result -> result.messages }
+        val messagesByConversation = when (query.isNotEmpty()) {
+            true -> Realm.getDefaultInstance()
+                    .where(Message::class.java)
+                    .contains("body", query, Case.INSENSITIVE)
+                    .findAll()
+                    .groupBy { message -> message.threadId }
+                    .filter { (threadId, _) -> conversations.firstOrNull { it.id == threadId } != null }
+                    .map { (threadId, messages) -> Pair(conversations.first { it.id == threadId }, messages.size) }
+                    .map { (conversation, messages) -> SearchResult(query, conversation, messages) }
+                    .sortedByDescending { result -> result.messages }
+
+            false -> listOf()
+        }
 
         return conversations
                 .filter { conversation -> conversationFilter.filter(conversation, query) }
