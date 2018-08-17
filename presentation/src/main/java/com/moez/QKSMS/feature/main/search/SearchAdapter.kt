@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with QKSMS.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.moez.QKSMS.feature.main
+package com.moez.QKSMS.feature.main.search
 
 import android.content.Context
 import android.text.SpannableString
@@ -36,8 +36,8 @@ import kotlinx.android.synthetic.main.search_list_item.view.*
 import javax.inject.Inject
 
 class SearchAdapter @Inject constructor(
+        colors: Colors,
         private val context: Context,
-        private val colors: Colors,
         private val dateFormatter: DateFormatter,
         private val navigator: Navigator
 ) : QkAdapter<SearchResult>() {

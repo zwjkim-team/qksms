@@ -18,39 +18,28 @@
  */
 package com.moez.QKSMS.feature.main
 
-import androidx.recyclerview.widget.ItemTouchHelper
+import com.bluelinelabs.conductor.RouterTransaction
+import com.bluelinelabs.conductor.changehandler.FadeChangeHandler
 import com.moez.QKSMS.R
 import com.moez.QKSMS.common.Navigator
 import com.moez.QKSMS.common.androidxcompat.scope
 import com.moez.QKSMS.common.base.QkViewModel
 import com.moez.QKSMS.common.util.BillingManager
-import com.moez.QKSMS.extensions.removeAccents
-import com.moez.QKSMS.interactor.DeleteConversations
+import com.moez.QKSMS.feature.main.conversations.ConversationsController
+import com.moez.QKSMS.feature.main.search.SearchController
+import com.moez.QKSMS.feature.settings.SettingsController
 import com.moez.QKSMS.interactor.MarkAllSeen
-import com.moez.QKSMS.interactor.MarkArchived
-import com.moez.QKSMS.interactor.MarkBlocked
-import com.moez.QKSMS.interactor.MarkPinned
-import com.moez.QKSMS.interactor.MarkRead
-import com.moez.QKSMS.interactor.MarkUnarchived
-import com.moez.QKSMS.interactor.MarkUnpinned
-import com.moez.QKSMS.interactor.MarkUnread
 import com.moez.QKSMS.interactor.MigratePreferences
 import com.moez.QKSMS.interactor.SyncMessages
 import com.moez.QKSMS.manager.PermissionManager
 import com.moez.QKSMS.manager.RatingManager
 import com.moez.QKSMS.model.SyncLog
-import com.moez.QKSMS.repository.ConversationRepository
 import com.moez.QKSMS.repository.SyncRepository
-import com.moez.QKSMS.util.Preferences
 import com.uber.autodispose.kotlin.autoDisposable
-import io.reactivex.Observable
-import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.rxkotlin.Observables
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.rxkotlin.withLatestFrom
-import io.reactivex.schedulers.Schedulers
 import io.realm.Realm
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class MainViewModel @Inject constructor(
@@ -58,27 +47,14 @@ class MainViewModel @Inject constructor(
         markAllSeen: MarkAllSeen,
         migratePreferences: MigratePreferences,
         syncRepository: SyncRepository,
-        private val conversationRepo: ConversationRepository,
-        private val deleteConversations: DeleteConversations,
-        private val markArchived: MarkArchived,
-        private val markBlocked: MarkBlocked,
-        private val markPinned: MarkPinned,
-        private val markRead: MarkRead,
-        private val markUnarchived: MarkUnarchived,
-        private val markUnpinned: MarkUnpinned,
-        private val markUnread: MarkUnread,
         private val navigator: Navigator,
         private val permissionManager: PermissionManager,
-        private val prefs: Preferences,
         private val ratingManager: RatingManager,
         private val syncMessages: SyncMessages
-) : QkViewModel<MainView, MainState>(MainState(page = Inbox(data = conversationRepo.getConversations()))) {
+) : QkViewModel<MainView, MainState>(MainState()) {
 
     init {
-        disposables += deleteConversations
         disposables += markAllSeen
-        disposables += markArchived
-        disposables += markUnarchived
         disposables += migratePreferences
         disposables += syncMessages
 
@@ -120,9 +96,9 @@ class MainViewModel @Inject constructor(
 
         // If the default SMS state or permission states change, update the ViewState
         Observables.combineLatest(
-                view.activityResumedIntent.map { permissionManager.isDefaultSms() }.distinctUntilChanged(),
-                view.activityResumedIntent.map { permissionManager.hasSms() }.distinctUntilChanged(),
-                view.activityResumedIntent.map { permissionManager.hasContacts() }.distinctUntilChanged())
+                view.activityResumed().map { permissionManager.isDefaultSms() }.distinctUntilChanged(),
+                view.activityResumed().map { permissionManager.hasSms() }.distinctUntilChanged(),
+                view.activityResumed().map { permissionManager.hasContacts() }.distinctUntilChanged())
         { defaultSms, smsPermission, contactPermission ->
             newState { copy(defaultSms = defaultSms, smsPermission = smsPermission, contactPermission = contactPermission) }
         }
@@ -130,7 +106,7 @@ class MainViewModel @Inject constructor(
                 .subscribe()
 
         // If the SMS permission state changes from false to true, sync messages
-        view.activityResumedIntent
+        view.activityResumed()
                 .map { permissionManager.hasSms() }
                 .distinctUntilChanged()
                 .skip(1)
@@ -144,210 +120,70 @@ class MainViewModel @Inject constructor(
                     }
                 }
 
-        view.queryChangedIntent
-                .debounce(200, TimeUnit.MILLISECONDS)
-                .observeOn(AndroidSchedulers.mainThread())
-                .map { query -> query.removeAccents() }
-                .withLatestFrom(state) { query, state ->
-                    if (query.isEmpty() && state.page is Searching) {
-                        newState { copy(page = Inbox(data = conversationRepo.getConversations())) }
-                    }
-                    query
-                }
-                .filter { query -> query.length >= 2 }
-                .doOnNext {
-                    newState {
-                        val page = (page as? Searching) ?: Searching()
-                        copy(page = page.copy(loading = true))
-                    }
-                }
-                .observeOn(Schedulers.io())
-                .switchMap { query -> Observable.just(query).map { conversationRepo.searchConversations(it) } }
+        view.optionsItemSelected()
+                .filter { it == R.id.search }
                 .autoDisposable(view.scope())
-                .subscribe { data -> newState { copy(page = Searching(loading = false, data = data)) } }
-
-        view.composeIntent
-                .autoDisposable(view.scope())
-                .subscribe { navigator.showCompose() }
-
-        view.homeIntent
-                .withLatestFrom(state) { _, state ->
-                    when {
-                        state.page is Searching -> view.clearSearch()
-
-                        state.page is Inbox && state.page.selected > 0 -> view.clearSelection()
-                        state.page is Inbox && state.page.showClearButton -> view.clearSearch()
-
-                        state.page is Archived && state.page.selected > 0 -> view.clearSelection()
-
-                        else -> newState { copy(drawerOpen = true) }
-                    }
+                .subscribe {
+                    view.getRouter().pushController(RouterTransaction.with(SearchController())
+                            .popChangeHandler(FadeChangeHandler())
+                            .pushChangeHandler(FadeChangeHandler()))
                 }
-                .autoDisposable(view.scope())
-                .subscribe()
 
-        view.drawerOpenIntent
+        view.drawerOpened()
                 .autoDisposable(view.scope())
                 .subscribe { open -> newState { copy(drawerOpen = open) } }
 
-        view.drawerItemIntent
+        view.drawerItemSelected()
                 .doOnNext { newState { copy(drawerOpen = false) } }
                 .doOnNext { if (it == DrawerItem.SCHEDULED) navigator.showScheduled() }
                 .doOnNext { if (it == DrawerItem.BLOCKING) navigator.showBlockedConversations() }
-                .doOnNext { if (it == DrawerItem.SETTINGS) navigator.showSettings() }
                 .doOnNext { if (it == DrawerItem.PLUS) navigator.showQksmsPlusActivity("main_menu") }
                 .doOnNext { if (it == DrawerItem.HELP) navigator.showSupport() }
                 .doOnNext { if (it == DrawerItem.INVITE) navigator.showInvite() }
-                .distinctUntilChanged()
-                .doOnNext {
+                .autoDisposable(view.scope())
+                .subscribe {
                     when (it) {
-                        DrawerItem.INBOX -> newState { copy(page = Inbox(data = conversationRepo.getConversations())) }
-                        DrawerItem.ARCHIVED -> newState { copy(page = Archived(data = conversationRepo.getConversations(true))) }
-                        else -> {
-                        } // Do nothing
+                        DrawerItem.INBOX -> view.getRouter().replaceTopController(
+                                RouterTransaction.with(ConversationsController())
+                                        .popChangeHandler(FadeChangeHandler())
+                                        .pushChangeHandler(FadeChangeHandler()))
+
+                        DrawerItem.ARCHIVED -> view.getRouter().replaceTopController(
+                                RouterTransaction.with(ConversationsController(true))
+                                        .popChangeHandler(FadeChangeHandler())
+                                        .pushChangeHandler(FadeChangeHandler()))
+
+                        DrawerItem.SETTINGS -> view.getRouter().pushController(
+                                RouterTransaction.with(SettingsController())
+                                        .popChangeHandler(FadeChangeHandler())
+                                        .pushChangeHandler(FadeChangeHandler()))
                     }
                 }
-                .autoDisposable(view.scope())
-                .subscribe()
 
-        view.optionsItemIntent
-                .withLatestFrom(view.conversationsSelectedIntent) { itemId, conversations ->
-                    when (itemId) {
-                        R.id.archive -> {
-                            markArchived.execute(conversations)
-                            view.clearSelection()
-                        }
-
-                        R.id.unarchive -> {
-                            markUnarchived.execute(conversations)
-                            view.clearSelection()
-                        }
-
-                        R.id.delete -> view.showDeleteDialog(conversations)
-
-                        R.id.pin -> {
-                            markPinned.execute(conversations)
-                            view.clearSelection()
-                        }
-
-                        R.id.unpin -> {
-                            markUnpinned.execute(conversations)
-                            view.clearSelection()
-                        }
-
-                        R.id.read -> {
-                            markRead.execute(conversations)
-                            view.clearSelection()
-                        }
-
-                        R.id.unread -> {
-                            markUnread.execute(conversations)
-                            view.clearSelection()
-                        }
-
-                        R.id.block -> {
-                            markBlocked.execute(conversations)
-                            view.clearSelection()
-                        }
-                    }
-                }
-                .autoDisposable(view.scope())
-                .subscribe()
-
-        view.plusBannerIntent
+        view.plusBannerClicked()
                 .autoDisposable(view.scope())
                 .subscribe {
                     newState { copy(drawerOpen = false) }
                     navigator.showQksmsPlusActivity("main_banner")
                 }
 
-        view.rateIntent
+        view.ratingClicked()
                 .autoDisposable(view.scope())
                 .subscribe {
                     navigator.showRating()
                     ratingManager.rate()
                 }
 
-        view.dismissRatingIntent
+        view.ratingDismissed()
                 .autoDisposable(view.scope())
                 .subscribe { ratingManager.dismiss() }
 
-        view.conversationsSelectedIntent
-                .withLatestFrom(state) { selection, state ->
-                    val pin = selection
-                            .mapNotNull(conversationRepo::getConversation)
-                            .sumBy { if (it.pinned) -1 else 1 } >= 0
-                    val read = selection
-                            .mapNotNull(conversationRepo::getConversation)
-                            .sumBy { if (it.read) -1 else 1 } >= 0
-                    val selected = selection.size
-
-                    when (state.page) {
-                        is Inbox -> {
-                            val page = state.page.copy(markPinned = pin, markRead = read, selected = selected, showClearButton = selected > 0)
-                            newState { copy(page = page.copy(markRead = read, selected = selected, showClearButton = selected > 0)) }
-                        }
-
-                        is Archived -> {
-                            val page = state.page.copy(markPinned = pin, markRead = read, selected = selected, showClearButton = selected > 0)
-                            newState { copy(page = page) }
-                        }
-                    }
-                }
-                .autoDisposable(view.scope())
-                .subscribe()
-
-        // Delete the conversation
-        view.confirmDeleteIntent
-                .autoDisposable(view.scope())
-                .subscribe { conversations ->
-                    deleteConversations.execute(conversations)
-                    view.clearSelection()
-                }
-
-        view.swipeConversationIntent
-                .autoDisposable(view.scope())
-                .subscribe { (threadId, direction) ->
-                    val action = if (direction == ItemTouchHelper.RIGHT) prefs.swipeRight.get() else prefs.swipeLeft.get()
-                    when (action) {
-                        Preferences.SWIPE_ACTION_ARCHIVE -> markArchived.execute(listOf(threadId)) { view.showArchivedSnackbar() }
-                        Preferences.SWIPE_ACTION_DELETE -> view.showDeleteDialog(listOf(threadId))
-                        Preferences.SWIPE_ACTION_CALL -> conversationRepo.getConversation(threadId)?.recipients?.firstOrNull()?.address?.let(navigator::makePhoneCall)
-                        Preferences.SWIPE_ACTION_READ -> markRead.execute(listOf(threadId))
-                    }
-                }
-
-        view.undoArchiveIntent
-                .withLatestFrom(view.swipeConversationIntent) { _, pair -> pair.first }
-                .autoDisposable(view.scope())
-                .subscribe { threadId -> markUnarchived.execute(listOf(threadId)) }
-
-        view.snackbarButtonIntent
+        view.snackbarClicked()
                 .withLatestFrom(state) { _, state ->
                     when {
                         !state.smsPermission -> view.requestPermissions()
                         !state.defaultSms -> navigator.showDefaultSmsDialog()
                         !state.contactPermission -> view.requestPermissions()
-                    }
-                }
-                .autoDisposable(view.scope())
-                .subscribe()
-
-        view.backPressedIntent
-                .withLatestFrom(state) { _, state ->
-                    when {
-                        state.drawerOpen -> newState { copy(drawerOpen = false) }
-
-                        state.page is Searching -> view.clearSearch()
-
-                        state.page is Inbox && state.page.selected > 0 -> view.clearSelection()
-                        state.page is Inbox && state.page.showClearButton -> view.clearSearch()
-
-                        state.page is Archived && state.page.selected > 0 -> view.clearSelection()
-
-                        state.page !is Inbox -> newState { copy(page = Inbox(data = conversationRepo.getConversations())) }
-
-                        else -> newState { copy(hasError = true) }
                     }
                 }
                 .autoDisposable(view.scope())

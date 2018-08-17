@@ -16,16 +16,26 @@
  * You should have received a copy of the GNU General Public License
  * along with QKSMS.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.moez.QKSMS.feature.main
+package com.moez.QKSMS.feature.main.conversations.injection
 
-import com.moez.QKSMS.repository.SyncRepository
+import com.bluelinelabs.conductor.autodispose.ControllerEvent
+import com.moez.QKSMS.feature.main.conversations.ConversationsController
+import com.moez.QKSMS.injection.scope.ControllerScope
+import com.uber.autodispose.LifecycleScopeProvider
+import dagger.Module
+import dagger.Provides
+import javax.inject.Named
 
-data class MainState(
-        val drawerOpen: Boolean = false,
-        val upgraded: Boolean = true,
-        val showRating: Boolean = false,
-        val syncing: SyncRepository.SyncProgress = SyncRepository.SyncProgress.Idle(),
-        val defaultSms: Boolean = false,
-        val smsPermission: Boolean = false,
-        val contactPermission: Boolean = false
-)
+@Module
+class ConversationsModule(private val controller: ConversationsController) {
+
+    @Provides
+    @ControllerScope
+    @Named("archived")
+    fun provideArchived(): Boolean = controller.archived
+
+    @Provides
+    @ControllerScope
+    fun provideLifecycle(): LifecycleScopeProvider<ControllerEvent> = controller.scope()
+
+}

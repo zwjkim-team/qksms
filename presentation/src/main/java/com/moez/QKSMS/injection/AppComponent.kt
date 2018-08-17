@@ -28,6 +28,8 @@ import com.moez.QKSMS.common.widget.QkSwitch
 import com.moez.QKSMS.common.widget.QkTextView
 import com.moez.QKSMS.feature.compose.DetailedChipView
 import com.moez.QKSMS.feature.conversationinfo.injection.ConversationInfoComponent
+import com.moez.QKSMS.feature.main.conversations.injection.ConversationsComponent
+import com.moez.QKSMS.feature.main.search.SearchController
 import com.moez.QKSMS.feature.settings.SettingsController
 import com.moez.QKSMS.feature.settings.about.AboutController
 import com.moez.QKSMS.feature.settings.swipe.SwipeActionsController
@@ -51,11 +53,13 @@ import javax.inject.Singleton
 interface AppComponent {
 
     fun conversationInfoBuilder(): ConversationInfoComponent.Builder
+    fun conversationsBuilder(): ConversationsComponent.Builder
     fun themePickerBuilder(): ThemePickerComponent.Builder
 
     fun inject(application: QKApplication)
 
     fun inject(controller: AboutController)
+    fun inject(controller: SearchController)
     fun inject(controller: SettingsController)
     fun inject(controller: SwipeActionsController)
 

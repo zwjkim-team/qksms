@@ -35,7 +35,6 @@ import com.moez.QKSMS.feature.qkreply.QkReplyActivity
 import com.moez.QKSMS.feature.qkreply.QkReplyActivityModule
 import com.moez.QKSMS.feature.scheduled.ScheduledActivity
 import com.moez.QKSMS.feature.scheduled.ScheduledActivityModule
-import com.moez.QKSMS.feature.settings.SettingsActivity
 import com.moez.QKSMS.injection.scope.ActivityScope
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
@@ -74,10 +73,6 @@ abstract class ActivityBuilderModule {
     @ActivityScope
     @ContributesAndroidInjector(modules = [ScheduledActivityModule::class])
     abstract fun bindScheduledActivity(): ScheduledActivity
-
-    @ActivityScope
-    @ContributesAndroidInjector(modules = [])
-    abstract fun bindSettingsActivity(): SettingsActivity
 
     @ActivityScope
     @ContributesAndroidInjector(modules = [BlockedActivityModule::class])

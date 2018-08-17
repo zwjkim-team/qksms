@@ -16,16 +16,23 @@
  * You should have received a copy of the GNU General Public License
  * along with QKSMS.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.moez.QKSMS.feature.main
+package com.moez.QKSMS.feature.main.conversations
 
-import com.moez.QKSMS.repository.SyncRepository
+import com.moez.QKSMS.common.base.QkViewContract
+import io.reactivex.Observable
 
-data class MainState(
-        val drawerOpen: Boolean = false,
-        val upgraded: Boolean = true,
-        val showRating: Boolean = false,
-        val syncing: SyncRepository.SyncProgress = SyncRepository.SyncProgress.Idle(),
-        val defaultSms: Boolean = false,
-        val smsPermission: Boolean = false,
-        val contactPermission: Boolean = false
-)
+interface ConversationsView : QkViewContract<ConversationsState> {
+
+    fun optionsItemSelected(): Observable<Int>
+    fun conversationSwiped(): Observable<Pair<Long, Int>>
+    fun archiveUndone(): Observable<*>
+    fun selectionChanges(): Observable<List<Long>>
+    fun deleteConfirmed(): Observable<List<Long>>
+    fun composeClicks(): Observable<*>
+    fun backClicks(): Observable<*>
+
+    fun clearSelection()
+    fun showDeleteDialog(conversations: List<Long>)
+    fun showArchivedSnackbar()
+
+}

@@ -16,16 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with QKSMS.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.moez.QKSMS.feature.main
+package com.moez.QKSMS.feature.main.conversations
 
-import com.moez.QKSMS.repository.SyncRepository
+import com.moez.QKSMS.model.Conversation
+import io.realm.RealmResults
 
-data class MainState(
-        val drawerOpen: Boolean = false,
-        val upgraded: Boolean = true,
-        val showRating: Boolean = false,
-        val syncing: SyncRepository.SyncProgress = SyncRepository.SyncProgress.Idle(),
-        val defaultSms: Boolean = false,
-        val smsPermission: Boolean = false,
-        val contactPermission: Boolean = false
-)
+data class ConversationsState(
+        val showClearButton: Boolean = false,
+        val markPinned: Boolean = true,
+        val markRead: Boolean = false,
+        val conversations: RealmResults<Conversation>? = null,
+        val selected: Int = 0)

@@ -37,7 +37,6 @@ import com.moez.QKSMS.feature.gallery.GalleryActivity
 import com.moez.QKSMS.feature.notificationprefs.NotificationPrefsActivity
 import com.moez.QKSMS.feature.plus.PlusActivity
 import com.moez.QKSMS.feature.scheduled.ScheduledActivity
-import com.moez.QKSMS.feature.settings.SettingsActivity
 import com.moez.QKSMS.manager.AnalyticsManager
 import com.moez.QKSMS.manager.NotificationManager
 import com.moez.QKSMS.manager.PermissionManager
@@ -129,11 +128,6 @@ class Navigator @Inject constructor(
     fun showScheduled() {
         analyticsManager.track("Viewed Scheduled")
         val intent = Intent(context, ScheduledActivity::class.java)
-        startActivity(intent)
-    }
-
-    fun showSettings() {
-        val intent = Intent(context, SettingsActivity::class.java)
         startActivity(intent)
     }
 

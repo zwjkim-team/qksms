@@ -137,12 +137,7 @@ class SettingsPresenter @Inject constructor(
 
                         R.id.mmsSize -> view.showMmsSizePicker()
 
-                        R.id.sync -> {
-                            newState { copy(syncing = true) }
-                            syncMessages.execute(Unit) {
-                                newState { copy(syncing = false) }
-                            }
-                        }
+                        R.id.sync -> syncMessages.execute(Unit)
 
                         R.id.about -> view.showAbout()
                     }

@@ -1,14 +1,10 @@
 package com.moez.QKSMS.feature.settings
 
-import android.app.ProgressDialog
 import android.app.TimePickerDialog
 import android.content.Context
 import android.text.format.DateFormat
 import android.view.View
 import com.bluelinelabs.conductor.RouterTransaction
-import com.bluelinelabs.conductor.changehandler.FadeChangeHandler
-import com.bluelinelabs.conductor.changehandler.HorizontalChangeHandler
-import com.bluelinelabs.conductor.changehandler.VerticalChangeHandler
 import com.google.android.material.snackbar.Snackbar
 import com.jakewharton.rxbinding2.view.clicks
 import com.jakewharton.rxbinding2.view.longClicks
@@ -52,18 +48,8 @@ class SettingsController : QkController<SettingsView, SettingsState, SettingsPre
     private val startTimeSelectedSubject: Subject<Pair<Int, Int>> = PublishSubject.create()
     private val endTimeSelectedSubject: Subject<Pair<Int, Int>> = PublishSubject.create()
 
-    // TODO remove this
-    private val progressDialog by lazy {
-        ProgressDialog(activity).apply {
-            isIndeterminate = true
-            setCancelable(false)
-            setCanceledOnTouchOutside(false)
-        }
-    }
-
     init {
         appComponent.inject(this)
-        retainViewMode = RetainViewMode.RETAIN_DETACH
         layoutRes = R.layout.settings_controller
 
         colors.themeObservable()
@@ -112,9 +98,6 @@ class SettingsController : QkController<SettingsView, SettingsState, SettingsPre
     override fun mmsSizeSelected(): Observable<Int> = mmsSizeDialog.adapter.menuItemClicks
 
     override fun render(state: SettingsState) {
-        if (progressDialog.isShowing && !state.syncing) progressDialog.dismiss()
-        else if (!progressDialog.isShowing && state.syncing) progressDialog.show()
-
         themePreview.setBackgroundTint(state.theme)
         night.summary = state.nightModeSummary
         nightModeDialog.adapter.selectedItem = state.nightModeId

@@ -16,21 +16,21 @@
  * You should have received a copy of the GNU General Public License
  * along with QKSMS.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.moez.QKSMS.feature.conversations
+package com.moez.QKSMS.feature.main.conversations
 
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import androidx.core.graphics.drawable.toBitmap
-import androidx.lifecycle.Lifecycle
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
+import com.bluelinelabs.conductor.autodispose.ControllerEvent
 import com.moez.QKSMS.R
-import com.moez.QKSMS.common.androidxcompat.scope
 import com.moez.QKSMS.common.util.Colors
 import com.moez.QKSMS.common.util.extensions.dpToPx
 import com.moez.QKSMS.util.Preferences
+import com.uber.autodispose.LifecycleScopeProvider
 import com.uber.autodispose.kotlin.autoDisposable
 import io.reactivex.rxkotlin.Observables
 import io.reactivex.subjects.PublishSubject
@@ -40,7 +40,7 @@ import javax.inject.Inject
 
 class ConversationItemTouchCallback @Inject constructor(
         colors: Colors,
-        lifecycle: Lifecycle,
+        lifecycle: LifecycleScopeProvider<ControllerEvent>,
         prefs: Preferences,
         private val context: Context
 ) : ItemTouchHelper.SimpleCallback(0, 0) {
@@ -62,7 +62,7 @@ class ConversationItemTouchCallback @Inject constructor(
 
     init {
         colors.themeObservable()
-                .autoDisposable(lifecycle.scope())
+                .autoDisposable(lifecycle)
                 .subscribe { theme -> paint.color = theme.theme }
 
         Observables
@@ -74,7 +74,7 @@ class ConversationItemTouchCallback @Inject constructor(
                     setDefaultSwipeDirs((if (right == Preferences.SWIPE_ACTION_NONE) 0 else ItemTouchHelper.RIGHT)
                             or (if (left == Preferences.SWIPE_ACTION_NONE) 0 else ItemTouchHelper.LEFT))
                 }
-                .autoDisposable(lifecycle.scope())
+                .autoDisposable(lifecycle)
                 .subscribe()
     }
 

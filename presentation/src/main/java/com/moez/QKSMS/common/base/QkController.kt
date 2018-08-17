@@ -1,28 +1,34 @@
 package com.moez.QKSMS.common.base
 
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.CallSuper
 import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AppCompatActivity
 import com.bluelinelabs.conductor.Controller
 import com.bluelinelabs.conductor.autodispose.ControllerEvent
 import com.bluelinelabs.conductor.autodispose.ControllerScopeProvider
 import com.uber.autodispose.LifecycleScopeProvider
+import io.reactivex.subjects.PublishSubject
+import io.reactivex.subjects.Subject
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.*
-import kotlinx.android.synthetic.main.toolbar.view.*
 
 abstract class QkController<ViewContract : QkViewContract<State>, State, Presenter : QkPresenter<ViewContract, State>> : Controller(), LayoutContainer {
 
     abstract var presenter: Presenter
 
-    private val appCompatActivity: AppCompatActivity?
-        get() = activity as? AppCompatActivity
+    private val qkActivity: QkActivity?
+        get() = activity as? QkActivity
 
     protected val themedActivity: QkThemedActivity?
         get() = activity as? QkThemedActivity
+
+    protected val optionsItemSubject: Subject<Int> = PublishSubject.create()
 
     override var containerView: View? = null
 
@@ -36,8 +42,7 @@ abstract class QkController<ViewContract : QkViewContract<State>, State, Present
         }
     }
 
-    open fun onViewCreated() {
-    }
+    open fun onViewCreated() = Unit
 
     fun setTitle(@StringRes titleId: Int) {
         setTitle(activity?.getString(titleId))
@@ -45,18 +50,28 @@ abstract class QkController<ViewContract : QkViewContract<State>, State, Present
 
     fun setTitle(title: CharSequence?) {
         activity?.title = title
-        view?.toolbarTitle?.text = title
     }
 
     fun showBackButton(show: Boolean) {
-        appCompatActivity?.supportActionBar?.setDisplayHomeAsUpEnabled(show)
+        qkActivity?.showBackButton(show)
     }
 
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        themedActivity?.menu?.onNext(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        optionsItemSubject.onNext(item.itemId)
+        return super.onOptionsItemSelected(item)
+    }
+
+    @CallSuper
     override fun onDestroyView(view: View) {
         containerView = null
         clearFindViewByIdCache()
     }
 
+    @CallSuper
     override fun onDestroy() {
         super.onDestroy()
         presenter.onCleared()
