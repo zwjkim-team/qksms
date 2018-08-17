@@ -18,6 +18,7 @@
  */
 package com.moez.QKSMS.feature.main.conversations
 
+import com.bluelinelabs.conductor.Router
 import com.moez.QKSMS.common.base.QkViewContract
 import io.reactivex.Observable
 
@@ -30,6 +31,8 @@ interface ConversationsView : QkViewContract<ConversationsState> {
     fun deleteConfirmed(): Observable<List<Long>>
     fun composeClicks(): Observable<*>
     fun backClicks(): Observable<*>
+
+    fun getRouter(): Router
 
     fun clearSelection()
     fun showDeleteDialog(conversations: List<Long>)

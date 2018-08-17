@@ -19,9 +19,12 @@
 package com.moez.QKSMS.feature.main.conversations
 
 import androidx.recyclerview.widget.ItemTouchHelper
+import com.bluelinelabs.conductor.RouterTransaction
+import com.bluelinelabs.conductor.changehandler.FadeChangeHandler
 import com.moez.QKSMS.R
 import com.moez.QKSMS.common.Navigator
 import com.moez.QKSMS.common.base.QkPresenter
+import com.moez.QKSMS.feature.main.search.SearchController
 import com.moez.QKSMS.interactor.DeleteConversations
 import com.moez.QKSMS.interactor.MarkArchived
 import com.moez.QKSMS.interactor.MarkBlocked
@@ -71,6 +74,12 @@ class ConversationsPresenter @Inject constructor(
         view.optionsItemSelected()
                 .withLatestFrom(view.selectionChanges()) { itemId, conversations ->
                     when (itemId) {
+                        R.id.search -> {
+                            view.getRouter().pushController(RouterTransaction.with(SearchController())
+                                    .popChangeHandler(FadeChangeHandler())
+                                    .pushChangeHandler(FadeChangeHandler()))
+                        }
+
                         R.id.archive -> {
                             markArchived.execute(conversations)
                             view.clearSelection()

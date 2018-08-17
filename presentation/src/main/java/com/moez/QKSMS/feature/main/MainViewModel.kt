@@ -20,13 +20,11 @@ package com.moez.QKSMS.feature.main
 
 import com.bluelinelabs.conductor.RouterTransaction
 import com.bluelinelabs.conductor.changehandler.FadeChangeHandler
-import com.moez.QKSMS.R
 import com.moez.QKSMS.common.Navigator
 import com.moez.QKSMS.common.androidxcompat.scope
 import com.moez.QKSMS.common.base.QkViewModel
 import com.moez.QKSMS.common.util.BillingManager
 import com.moez.QKSMS.feature.main.conversations.ConversationsController
-import com.moez.QKSMS.feature.main.search.SearchController
 import com.moez.QKSMS.feature.settings.SettingsController
 import com.moez.QKSMS.interactor.MarkAllSeen
 import com.moez.QKSMS.interactor.MigratePreferences
@@ -118,15 +116,6 @@ class MainViewModel @Inject constructor(
                     if (!permissionManager.isDefaultSms()) {
                         navigator.showDefaultSmsDialog()
                     }
-                }
-
-        view.optionsItemSelected()
-                .filter { it == R.id.search }
-                .autoDisposable(view.scope())
-                .subscribe {
-                    view.getRouter().pushController(RouterTransaction.with(SearchController())
-                            .popChangeHandler(FadeChangeHandler())
-                            .pushChangeHandler(FadeChangeHandler()))
                 }
 
         view.drawerOpened()

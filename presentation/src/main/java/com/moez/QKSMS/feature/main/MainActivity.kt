@@ -23,8 +23,6 @@ import android.animation.ObjectAnimator
 import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.Gravity
-import android.view.Menu
-import android.view.MenuItem
 import android.view.ViewGroup
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.core.app.ActivityCompat
@@ -70,7 +68,6 @@ class MainActivity : QkThemedActivity(), MainView, ControllerChangeHandler.Contr
     private lateinit var router: Router
 
     private val activityResumedSubject: Subject<Unit> = PublishSubject.create()
-    private val optionsItemSubject: Subject<Int> = PublishSubject.create()
     private val backPressedSubject: Subject<Unit> = PublishSubject.create()
 
     private val viewModel by lazy { ViewModelProviders.of(this, viewModelFactory)[MainViewModel::class.java] }
@@ -128,16 +125,6 @@ class MainActivity : QkThemedActivity(), MainView, ControllerChangeHandler.Contr
     override fun onResume() {
         super.onResume()
         activityResumedSubject.onNext(Unit)
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.main, menu)
-        return super.onCreateOptionsMenu(menu)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        optionsItemSubject.onNext(item.itemId)
-        return super.onOptionsItemSelected(item)
     }
 
     override fun onDestroy() {
@@ -213,8 +200,6 @@ class MainActivity : QkThemedActivity(), MainView, ControllerChangeHandler.Contr
             plus.clicks().map { DrawerItem.PLUS },
             help.clicks().map { DrawerItem.HELP },
             invite.clicks().map { DrawerItem.INVITE }))
-
-    override fun optionsItemSelected(): Observable<Int> = optionsItemSubject
 
     override fun plusBannerClicked(): Observable<*> = plusBanner.clicks()
 

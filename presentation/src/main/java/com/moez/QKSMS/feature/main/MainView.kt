@@ -27,7 +27,6 @@ interface MainView : QkView<MainState> {
     fun activityResumed(): Observable<*>
     fun drawerOpened(): Observable<Boolean>
     fun drawerItemSelected(): Observable<DrawerItem>
-    fun optionsItemSelected(): Observable<Int>
     fun plusBannerClicked(): Observable<*>
     fun ratingDismissed(): Observable<*>
     fun ratingClicked(): Observable<*>

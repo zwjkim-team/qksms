@@ -4,6 +4,8 @@ import android.app.TimePickerDialog
 import android.content.Context
 import android.text.format.DateFormat
 import android.view.View
+import com.bluelinelabs.conductor.ControllerChangeHandler
+import com.bluelinelabs.conductor.ControllerChangeType
 import com.bluelinelabs.conductor.RouterTransaction
 import com.google.android.material.snackbar.Snackbar
 import com.jakewharton.rxbinding2.view.clicks
@@ -31,6 +33,7 @@ import kotlinx.android.synthetic.main.settings_controller.*
 import kotlinx.android.synthetic.main.settings_controller.view.*
 import kotlinx.android.synthetic.main.settings_switch_widget.view.*
 import kotlinx.android.synthetic.main.settings_theme_widget.*
+import timber.log.Timber
 import javax.inject.Inject
 
 class SettingsController : QkController<SettingsView, SettingsState, SettingsPresenter>(), SettingsView {
@@ -69,7 +72,6 @@ class SettingsController : QkController<SettingsView, SettingsState, SettingsPre
     }
 
     override fun onAttach(view: View) {
-        super.onAttach(view)
         presenter.bindIntents(this)
         setTitle(R.string.title_settings)
         showBackButton(true)

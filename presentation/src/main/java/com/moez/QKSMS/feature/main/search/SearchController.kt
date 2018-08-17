@@ -42,6 +42,8 @@ class SearchController : QkController<SearchView, SearchState, SearchPresenter>(
     init {
         appComponent.inject(this)
         layoutRes = R.layout.search_controller
+
+        setHasOptionsMenu(true)
     }
 
     override fun onAttach(view: View) {
@@ -57,6 +59,8 @@ class SearchController : QkController<SearchView, SearchState, SearchPresenter>(
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.search, menu)
+
         // Find the MenuItem and ActionView
         val search = menu.findItem(R.id.search)
         val searchView = search?.actionView as? com.moez.QKSMS.common.widget.SearchView
