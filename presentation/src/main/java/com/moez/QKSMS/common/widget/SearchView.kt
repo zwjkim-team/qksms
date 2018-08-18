@@ -24,27 +24,21 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
 import androidx.appcompat.view.CollapsibleActionView
-import androidx.appcompat.widget.Toolbar
 import com.jakewharton.rxbinding2.widget.textChanges
 import com.moez.QKSMS.R
 import com.moez.QKSMS.common.util.extensions.dismissKeyboard
 import com.moez.QKSMS.common.util.extensions.showKeyboard
-import io.reactivex.Observable
 import kotlinx.android.synthetic.main.search_view.view.*
 
 class SearchView @JvmOverloads constructor(
         context: Context, attrs: AttributeSet? = null
 ) : LinearLayout(context, attrs), CollapsibleActionView {
 
-    val queryChanged: Observable<CharSequence>
+    val queryChanged by lazy { query.textChanges() }
 
     init {
         View.inflate(context, R.layout.search_view, this)
-        isSaveEnabled = true
-        layoutParams = Toolbar.LayoutParams(Toolbar.LayoutParams.MATCH_PARENT, Toolbar.LayoutParams.MATCH_PARENT)
         orientation = LinearLayout.HORIZONTAL
-
-        queryChanged = query.textChanges()
     }
 
     fun setText(text: CharSequence) {
@@ -52,6 +46,11 @@ class SearchView @JvmOverloads constructor(
     }
 
     override fun onActionViewExpanded() {
+        layoutParams = layoutParams.apply {
+            width = LayoutParams.MATCH_PARENT
+            height = LayoutParams.MATCH_PARENT
+        }
+
         // Focus on the query field and display the keyboard
         query.showKeyboard()
     }
