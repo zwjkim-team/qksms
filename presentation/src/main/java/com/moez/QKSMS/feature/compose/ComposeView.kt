@@ -21,41 +21,41 @@ package com.moez.QKSMS.feature.compose
 import android.net.Uri
 import androidx.annotation.StringRes
 import androidx.core.view.inputmethod.InputContentInfoCompat
-import com.moez.QKSMS.common.base.QkView
+import com.moez.QKSMS.common.base.QkViewContract
 import com.moez.QKSMS.model.Attachment
 import com.moez.QKSMS.model.Contact
 import com.moez.QKSMS.model.Message
 import io.reactivex.Observable
 import io.reactivex.subjects.Subject
 
-interface ComposeView : QkView<ComposeState> {
+interface ComposeView : QkViewContract<ComposeState> {
 
-    val activityVisibleIntent: Observable<Boolean>
-    val queryChangedIntent: Observable<CharSequence>
-    val queryBackspaceIntent: Observable<*>
-    val queryEditorActionIntent: Observable<Int>
-    val chipSelectedIntent: Subject<Contact>
-    val chipDeletedIntent: Subject<Contact>
-    val menuReadyIntent: Observable<Unit>
-    val optionsItemIntent: Observable<Int>
-    val sendAsGroupIntent: Observable<*>
-    val messageClickIntent: Subject<Message>
-    val messagesSelectedIntent: Observable<List<Long>>
-    val cancelSendingIntent: Subject<Message>
-    val attachmentDeletedIntent: Subject<Attachment>
-    val textChangedIntent: Observable<CharSequence>
-    val attachIntent: Observable<Unit>
-    val cameraIntent: Observable<*>
-    val galleryIntent: Observable<*>
-    val scheduleIntent: Observable<*>
-    val attachmentSelectedIntent: Observable<Uri>
-    val inputContentIntent: Observable<InputContentInfoCompat>
-    val scheduleSelectedIntent: Observable<Long>
-    val scheduleCancelIntent: Observable<*>
-    val changeSimIntent: Observable<*>
-    val sendIntent: Observable<Unit>
-    val viewQksmsPlusIntent: Subject<Unit>
-    val backPressedIntent: Observable<Unit>
+    fun activityVisible(): Observable<Boolean>
+    fun queryChanges(): Observable<CharSequence>
+    fun queryBackspaces(): Observable<*>
+    fun queryEditorActions(): Observable<Int>
+    fun chipSelected(): Observable<Contact>
+    fun chipDeleted(): Observable<Contact>
+    fun menuReady(): Observable<*>
+    fun optionItemSelected(): Observable<Int>
+    fun sendAsGroupToggled(): Observable<*>
+    fun messageClicks(): Subject<Message>
+    fun messagesSelected(): Observable<List<Long>>
+    fun sendingCancelled(): Subject<Message>
+    fun attachmentDeleted(): Subject<Attachment>
+    fun textChanged(): Observable<CharSequence>
+    fun attachClicks(): Observable<*>
+    fun cameraClicks(): Observable<*>
+    fun galleryClicks(): Observable<*>
+    fun scheduleClicks(): Observable<*>
+    fun attachmentSelected(): Observable<Uri>
+    fun inputContentSelected(): Observable<InputContentInfoCompat>
+    fun scheduleTimeSelected(): Observable<Long>
+    fun scheduleCancelled(): Observable<*>
+    fun simChanged(): Observable<*>
+    fun sendClicks(): Observable<*>
+    fun qksmsPlusClicks(): Subject<*>
+    fun backPresses(): Observable<*>
 
     fun clearSelection()
     fun showDetails(details: String)

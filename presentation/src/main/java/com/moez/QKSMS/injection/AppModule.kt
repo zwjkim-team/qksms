@@ -26,6 +26,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.f2prateek.rx.preferences2.RxSharedPreferences
 import com.moez.QKSMS.common.ViewModelFactory
 import com.moez.QKSMS.common.util.NotificationManagerImpl
+import com.moez.QKSMS.feature.compose.injection.ComposeComponent
 import com.moez.QKSMS.feature.conversationinfo.injection.ConversationInfoComponent
 import com.moez.QKSMS.feature.main.conversations.injection.ConversationsComponent
 import com.moez.QKSMS.feature.themepicker.injection.ThemePickerComponent
@@ -71,6 +72,7 @@ import dagger.Provides
 import javax.inject.Singleton
 
 @Module(subcomponents = [
+    ComposeComponent::class,
     ConversationInfoComponent::class,
     ConversationsComponent::class,
     ThemePickerComponent::class])
