@@ -64,6 +64,7 @@ class ConversationsController(
                 .inject(this)
 
         layoutRes = R.layout.conversations_controller
+        menuRes = R.menu.conversations
     }
 
     override fun onViewCreated() {
@@ -95,12 +96,10 @@ class ConversationsController(
     override fun onAttach(view: View) {
         presenter.bindIntents(this)
         showBackButton(false)
-        setHasOptionsMenu(true)
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.conversations, menu)
-        super.onCreateOptionsMenu(menu, inflater)
     }
 
     override fun handleBack(): Boolean {

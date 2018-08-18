@@ -20,14 +20,11 @@ package com.moez.QKSMS.common.widget
 
 import android.app.Activity
 import android.content.Context
-import android.os.Bundle
-import android.os.Parcelable
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
 import androidx.appcompat.view.CollapsibleActionView
 import androidx.appcompat.widget.Toolbar
-import androidx.core.os.bundleOf
 import com.jakewharton.rxbinding2.widget.textChanges
 import com.moez.QKSMS.R
 import com.moez.QKSMS.common.util.extensions.dismissKeyboard
@@ -50,19 +47,8 @@ class SearchView @JvmOverloads constructor(
         queryChanged = query.textChanges()
     }
 
-    public override fun onSaveInstanceState(): Parcelable? {
-        return bundleOf(
-                Pair("superState", super.onSaveInstanceState()),
-                Pair("text", query.text.toString()))
-    }
-
-    public override fun onRestoreInstanceState(state: Parcelable) {
-        var superState: Parcelable? = null
-        if (state is Bundle) {
-            superState = state.getParcelable("superState")
-            query.setText(state.getString("text"))
-        }
-        super.onRestoreInstanceState(superState)
+    fun setText(text: CharSequence) {
+        query.setText(text)
     }
 
     override fun onActionViewExpanded() {

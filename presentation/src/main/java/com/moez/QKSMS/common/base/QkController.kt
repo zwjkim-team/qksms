@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.CallSuper
 import androidx.annotation.LayoutRes
+import androidx.annotation.MenuRes
 import androidx.annotation.StringRes
 import com.bluelinelabs.conductor.Controller
 import com.bluelinelabs.conductor.autodispose.ControllerEvent
@@ -35,6 +36,13 @@ abstract class QkController<ViewContract : QkViewContract<State>, State, Present
     @LayoutRes
     var layoutRes: Int = 0
 
+    @MenuRes
+    var menuRes: Int = 0
+        set(value) {
+            field = value
+            setHasOptionsMenu(value != 0)
+        }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup): View {
         return inflater.inflate(layoutRes, container, false).also {
             containerView = it
@@ -57,9 +65,15 @@ abstract class QkController<ViewContract : QkViewContract<State>, State, Present
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(menuRes, menu)
+    }
+
+    @CallSuper
+    override fun onPrepareOptionsMenu(menu: Menu) {
         themedActivity?.menu?.onNext(menu)
     }
 
+    @CallSuper
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         optionsItemSubject.onNext(item.itemId)
         return super.onOptionsItemSelected(item)

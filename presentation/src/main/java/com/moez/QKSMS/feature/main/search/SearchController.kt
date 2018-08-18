@@ -19,7 +19,6 @@
 package com.moez.QKSMS.feature.main.search
 
 import android.view.Menu
-import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import androidx.core.view.isVisible
@@ -40,26 +39,29 @@ class SearchController : QkController<SearchView, SearchState, SearchPresenter>(
 
     private val queryChangedSubject: Subject<CharSequence> = PublishSubject.create()
 
+    // Hack: Conductor recreates the entire menu every time there's a transaction, meaning that our
+    // search is lost when we navigate back to this Controller. Store the query here so we can set
+    // it in the new menu once it's recreated
+    private var query: CharSequence = ""
+
     init {
         appComponent.inject(this)
         layoutRes = R.layout.search_controller
-
-        setHasOptionsMenu(true)
+        menuRes = R.menu.search
     }
 
     override fun onAttach(view: View) {
         super.onAttach(view)
         presenter.bindIntents(this)
         showBackButton(true)
-        setHasOptionsMenu(true)
     }
 
     override fun onViewCreated() {
         results.adapter = adapter
     }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.search, menu)
+    override fun onPrepareOptionsMenu(menu: Menu) {
+        super.onPrepareOptionsMenu(menu)
 
         // Find the MenuItem and ActionView
         val search = menu.findItem(R.id.search)
@@ -69,12 +71,13 @@ class SearchController : QkController<SearchView, SearchState, SearchPresenter>(
         search?.expandActionView()
         search?.setOnActionExpandListener(this)
 
+        searchView?.setText(query)
+
         // Forward text changes to our Presenter
         searchView?.queryChanged
+                ?.doOnNext { query = it }
                 ?.autoDisposable(scope())
                 ?.subscribe(queryChangedSubject)
-
-        super.onCreateOptionsMenu(menu, inflater)
     }
 
     override fun render(state: SearchState) {
