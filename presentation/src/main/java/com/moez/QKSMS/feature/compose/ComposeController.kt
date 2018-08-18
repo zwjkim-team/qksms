@@ -29,14 +29,11 @@ import android.os.Build
 import android.provider.MediaStore
 import android.text.format.DateFormat
 import android.view.Menu
-import android.view.MenuInflater
-import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.view.inputmethod.InputContentInfoCompat
 import androidx.core.view.isVisible
-import com.google.android.flexbox.FlexboxLayoutManager
 import com.google.android.material.snackbar.Snackbar
 import com.jakewharton.rxbinding2.view.clicks
 import com.jakewharton.rxbinding2.widget.textChanges
@@ -49,7 +46,7 @@ import com.moez.QKSMS.common.util.extensions.scrapViews
 import com.moez.QKSMS.common.util.extensions.setBackgroundTint
 import com.moez.QKSMS.common.util.extensions.setTint
 import com.moez.QKSMS.common.util.extensions.setVisible
-import com.moez.QKSMS.common.util.extensions.showKeyboard
+import com.moez.QKSMS.common.widget.ChipLayout
 import com.moez.QKSMS.extensions.plus
 import com.moez.QKSMS.feature.compose.injection.ComposeModule
 import com.moez.QKSMS.injection.appComponent
@@ -60,7 +57,8 @@ import com.uber.autodispose.kotlin.autoDisposable
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
-import kotlinx.android.synthetic.main.compose_activity.*
+import kotlinx.android.synthetic.main.compose_controller.*
+import kotlinx.android.synthetic.main.toolbar.*
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
@@ -79,7 +77,6 @@ class ComposeController(
     }
 
     @Inject lateinit var attachmentAdapter: AttachmentAdapter
-    @Inject lateinit var chipsAdapter: ChipsAdapter
     @Inject lateinit var contactsAdapter: ContactAdapter
     @Inject lateinit var dateFormatter: DateFormatter
     @Inject lateinit var messageAdapter: MessagesAdapter
@@ -87,6 +84,10 @@ class ComposeController(
     @Inject override lateinit var presenter: ComposePresenter
 
     private val activityVisibleSubject: Subject<Boolean> = PublishSubject.create()
+    private val queryChangeSubject: Subject<CharSequence> = PublishSubject.create()
+    private val queryBackspaceSubject: Subject<Unit> = PublishSubject.create()
+    private val queryEditorActionsSubject: Subject<Int> = PublishSubject.create()
+    private val chipDeletedSubject: Subject<Contact> = PublishSubject.create()
     private val attachmentSelectedSubject: Subject<Uri> = PublishSubject.create()
     private val scheduleSelectedSubject: Subject<Long> = PublishSubject.create()
     private val qksmsPlusClicksSubject: Subject<Unit> = PublishSubject.create()
@@ -102,7 +103,8 @@ class ComposeController(
                 .inject(this)
 
         retainViewMode = RetainViewMode.RETAIN_DETACH
-        layoutRes = R.layout.compose_activity
+        layoutRes = R.layout.compose_controller
+        menuRes = R.menu.compose
     }
 
     override fun onAttach(view: View) {
@@ -114,11 +116,7 @@ class ComposeController(
     override fun onViewCreated() {
         super.onViewCreated()
 
-        chipsAdapter.view = chips
-
         contacts.itemAnimator = null
-        chips.itemAnimator = null
-        chips.layoutManager = FlexboxLayoutManager(activity)
 
         messageAdapter.autoScrollToStart(messageList)
         messageAdapter.emptyView = messagesEmpty
@@ -157,6 +155,18 @@ class ComposeController(
         activityVisibleSubject.onNext(false)
     }
 
+    override fun onPrepareOptionsMenu(menu: Menu) {
+        super.onPrepareOptionsMenu(menu)
+
+        val search = menu.findItem(R.id.search)
+        val searchView = search?.actionView as? ChipLayout
+
+        searchView?.textChanges?.autoDisposable(scope())?.subscribe(queryChangeSubject)
+        searchView?.backspaces?.autoDisposable(scope())?.subscribe(queryBackspaceSubject)
+        searchView?.actions?.autoDisposable(scope())?.subscribe(queryEditorActionsSubject)
+        searchView?.chipDeleted?.autoDisposable(scope())?.subscribe(chipDeletedSubject)
+    }
+
     override fun render(state: ComposeState) {
         if (state.hasError) {
             activity?.finish()
@@ -171,33 +181,37 @@ class ComposeController(
             else -> state.conversationtitle
         })
 
-        toolbarSubtitle.setVisible(state.query.isNotEmpty())
-        toolbarSubtitle.text = activity?.getString(R.string.compose_subtitle_results, state.searchSelectionPosition, state.searchResults)
+        themedActivity?.toolbar?.subtitle = activity?.getString(R.string.compose_subtitle_results, state.searchSelectionPosition, state.searchResults).takeIf { state.query.isNotEmpty() }
 
-        toolbarTitle.setVisible(!state.editingMode)
-        chips.setVisible(state.editingMode)
         contacts.setVisible(state.contactsVisible)
         composeBar.setVisible(!state.contactsVisible && !state.loading)
 
         // Don't set the adapters unless needed
-        if (state.editingMode && chips.adapter == null) chips.adapter = chipsAdapter
         if (state.editingMode && contacts.adapter == null) contacts.adapter = contactsAdapter
 
-        toolbar.menu.findItem(R.id.call)?.isVisible = !state.editingMode && state.selectedMessages == 0 && state.query.isEmpty()
-        toolbar.menu.findItem(R.id.info)?.isVisible = !state.editingMode && state.selectedMessages == 0 && state.query.isEmpty()
-        toolbar.menu.findItem(R.id.copy)?.isVisible = !state.editingMode && state.selectedMessages == 1
-        toolbar.menu.findItem(R.id.details)?.isVisible = !state.editingMode && state.selectedMessages == 1
-        toolbar.menu.findItem(R.id.delete)?.isVisible = !state.editingMode && state.selectedMessages > 0
-        toolbar.menu.findItem(R.id.forward)?.isVisible = !state.editingMode && state.selectedMessages == 1
-        toolbar.menu.findItem(R.id.previous)?.isVisible = state.selectedMessages == 0 && state.query.isNotEmpty()
-        toolbar.menu.findItem(R.id.next)?.isVisible = state.selectedMessages == 0 && state.query.isNotEmpty()
-        toolbar.menu.findItem(R.id.clear)?.isVisible = state.selectedMessages == 0 && state.query.isNotEmpty()
 
-        if (chipsAdapter.data.isEmpty() && state.selectedContacts.isNotEmpty()) {
-            message.showKeyboard()
+        themedActivity?.toolbar?.menu?.run {
+            val search = findItem(R.id.search)
+            val searchView = search?.actionView as? ChipLayout
+
+            search?.isVisible = state.editingMode
+            searchView?.setChips(state.selectedContacts)
+            when {
+                state.editingMode && search?.isActionViewExpanded != true -> search.expandActionView()
+                !state.editingMode && search?.isActionViewExpanded == true -> search.collapseActionView()
+            }
+
+            findItem(R.id.call)?.isVisible = !state.editingMode && state.selectedMessages == 0 && state.query.isEmpty()
+            findItem(R.id.info)?.isVisible = !state.editingMode && state.selectedMessages == 0 && state.query.isEmpty()
+            findItem(R.id.copy)?.isVisible = !state.editingMode && state.selectedMessages == 1
+            findItem(R.id.details)?.isVisible = !state.editingMode && state.selectedMessages == 1
+            findItem(R.id.delete)?.isVisible = !state.editingMode && state.selectedMessages > 0
+            findItem(R.id.forward)?.isVisible = !state.editingMode && state.selectedMessages == 1
+            findItem(R.id.previous)?.isVisible = state.selectedMessages == 0 && state.query.isNotEmpty()
+            findItem(R.id.next)?.isVisible = state.selectedMessages == 0 && state.query.isNotEmpty()
+            findItem(R.id.clear)?.isVisible = state.selectedMessages == 0 && state.query.isNotEmpty()
         }
 
-        chipsAdapter.data = state.selectedContacts
         contactsAdapter.data = state.contacts
 
         loading.setVisible(state.loading)
@@ -231,15 +245,15 @@ class ComposeController(
 
     override fun activityVisible(): Observable<Boolean> = activityVisibleSubject
 
-    override fun queryChanges(): Observable<CharSequence> = chipsAdapter.textChanges
+    override fun queryChanges(): Observable<CharSequence> = queryChangeSubject
 
-    override fun queryBackspaces(): Observable<*> = chipsAdapter.backspaces
+    override fun queryBackspaces(): Observable<*> = queryBackspaceSubject
 
-    override fun queryEditorActions(): Observable<Int> = chipsAdapter.actions
+    override fun queryEditorActions(): Observable<Int> = queryEditorActionsSubject
 
     override fun chipSelected(): Observable<Contact> = contactsAdapter.contactSelected
 
-    override fun chipDeleted(): Observable<Contact> = chipsAdapter.chipDeleted
+    override fun chipDeleted(): Observable<Contact> = chipDeletedSubject
 
     override fun menuReady(): Observable<*> = themedActivity?.menu ?: Observable.empty<Menu>()
 
@@ -353,11 +367,6 @@ class ComposeController(
             setAction(R.string.button_more) { qksmsPlusClicksSubject.onNext(Unit) }
             show()
         }
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.compose, menu)
-        super.onCreateOptionsMenu(menu, inflater)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

@@ -40,7 +40,7 @@
         app:layout_constraintBottom_toBottomOf="@id/composeBackground"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintTop_toTopOf="parent"
         app:stackFromEnd="true"
         tools:listitem="@layout/message_list_item_in" />
 
@@ -54,7 +54,7 @@
         android:gravity="center"
         android:text="@string/compose_messages_empty"
         android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintTop_toTopOf="parent"
         app:textColor="tertiary"
         app:textSize="secondary" />
 
@@ -67,7 +67,7 @@
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintTop_toTopOf="parent"
         tools:progress="45"
         tools:progressTint="@color/tools_theme" />
 
@@ -85,7 +85,7 @@
         android:layout_height="0dp"
         android:background="?attr/colorPrimary"
         app:layout_constraintBottom_toBottomOf="@id/sendAsGroupSummary"
-        app:layout_constraintTop_toBottomOf="@id/toolbar" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <com.moez.QKSMS.common.widget.QkTextView
         android:id="@+id/sendAsGroupTitle"
@@ -145,7 +145,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintTop_toTopOf="parent"
         tools:listitem="@layout/contact_list_item"
         tools:visibility="gone" />
 
@@ -334,57 +334,6 @@
         app:layout_constraintBottom_toBottomOf="@id/messageBackground"
         app:layout_constraintEnd_toEndOf="@id/messageBackground"
         tools:backgroundTint="@color/tools_theme" />
-
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
-        style="@style/Toolbar"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        app:layout_constrainedHeight="true"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_max="140dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical"
-            android:orientation="vertical">
-
-            <com.moez.QKSMS.common.widget.QkTextView
-                android:id="@+id/toolbarTitle"
-                style="@style/ToolbarText"
-                android:layout_height="wrap_content"
-                tools:text="Moez Bhatti" />
-
-            <com.moez.QKSMS.common.widget.QkTextView
-                android:id="@+id/toolbarSubtitle"
-                style="@style/ToolbarText"
-                android:visibility="gone"
-                app:textColor="tertiary"
-                app:textSize="secondary"
-                tools:text="3 of 9 results" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/chips"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                android:layout_marginTop="4dp"
-                android:scrollbars="vertical"
-                tools:visibility="gone" />
-
-        </LinearLayout>
-
-    </androidx.appcompat.widget.Toolbar>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="8dp"
-        android:background="@drawable/ab_shadow"
-        app:layout_constraintTop_toBottomOf="@id/toolbar" />
 
     <View
         android:layout_width="match_parent"

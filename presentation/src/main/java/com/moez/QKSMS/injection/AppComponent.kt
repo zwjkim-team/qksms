@@ -21,6 +21,7 @@ package com.moez.QKSMS.injection
 import com.moez.QKSMS.common.QKApplication
 import com.moez.QKSMS.common.QkDialog
 import com.moez.QKSMS.common.widget.AvatarView
+import com.moez.QKSMS.common.widget.ChipLayout
 import com.moez.QKSMS.common.widget.PagerTitleView
 import com.moez.QKSMS.common.widget.PreferenceView
 import com.moez.QKSMS.common.widget.QkEditText
@@ -72,6 +73,7 @@ interface AppComponent {
     fun inject(service: WidgetAdapter)
 
     fun inject(view: AvatarView)
+    fun inject(view: ChipLayout)
     fun inject(view: DetailedChipView)
     fun inject(view: PagerTitleView)
     fun inject(view: PreferenceView)

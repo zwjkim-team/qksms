@@ -280,7 +280,7 @@ class ComposePresenter @Inject constructor(
                 view.chipDeleted().doOnNext { contact ->
                     contactsReducer.onNext { contacts -> contacts.filterNot { it == contact } }
                 },
-                view.chipDeleted().doOnNext { contact ->
+                view.chipSelected().doOnNext { contact ->
                     contactsReducer.onNext { contacts -> contacts.toMutableList().apply { add(contact) } }
                 })
                 .skipUntil(state.filter { state -> state.editingMode })
@@ -409,6 +409,7 @@ class ComposePresenter @Inject constructor(
 
         // Update the State when the message selected count changes
         view.messagesSelected()
+                .skip(1)
                 .map { selection -> selection.size }
                 .autoDisposable(view.scope())
                 .subscribe { messages -> newState { copy(selectedMessages = messages, editingMode = false) } }
