@@ -22,6 +22,7 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
+import androidx.core.view.isVisible
 import com.moez.QKSMS.R
 import com.moez.QKSMS.common.base.QkController
 import com.moez.QKSMS.injection.appComponent
@@ -54,7 +55,6 @@ class SearchController : QkController<SearchView, SearchState, SearchPresenter>(
     }
 
     override fun onViewCreated() {
-        adapter.emptyView = empty
         results.adapter = adapter
     }
 
@@ -79,6 +79,7 @@ class SearchController : QkController<SearchView, SearchState, SearchPresenter>(
 
     override fun render(state: SearchState) {
         adapter.data = state.data ?: listOf()
+        empty.isVisible = state.loading == false && state.data?.isEmpty() == true
     }
 
     override fun queryChanges(): Observable<CharSequence> = queryChangedSubject
