@@ -197,7 +197,7 @@ class ComposeController(
             search?.isVisible = state.editingMode
             searchView?.setChips(state.selectedContacts)
             when {
-                state.editingMode && search?.isActionViewExpanded != true -> search.expandActionView()
+                state.editingMode && search?.isActionViewExpanded == false -> search.expandActionView()
                 !state.editingMode && search?.isActionViewExpanded == true -> search.collapseActionView()
             }
 
