@@ -16,26 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with QKSMS.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.moez.QKSMS.feature.main
+package com.moez.QKSMS.common
 
-import androidx.lifecycle.ViewModel
-import com.moez.QKSMS.common.RouterProvider
-import com.moez.QKSMS.injection.ViewModelKey
-import com.moez.QKSMS.injection.scope.ActivityScope
-import dagger.Module
-import dagger.Provides
-import dagger.multibindings.IntoMap
+import com.bluelinelabs.conductor.Router
 
-@Module
-class MainActivityModule {
+/**
+ * We can't inject a [Router] from our Controller into our Presenter because it's not
+ * available until later in the lifecycle. We can however implement this interface in our
+ * controller, and inject this in order to obtain the router
+ */
+interface RouterProvider {
 
-    @Provides
-    @IntoMap
-    @ViewModelKey(MainViewModel::class)
-    @ActivityScope
-    fun provideMainViewModel(viewModel: MainViewModel): ViewModel = viewModel
-
-    @Provides
-    fun routerProvider(activity: MainActivity): RouterProvider = activity
+    fun getRouter(): Router
 
 }

@@ -18,7 +18,6 @@
  */
 package com.moez.QKSMS.feature.main
 
-import com.bluelinelabs.conductor.Router
 import com.moez.QKSMS.common.base.QkView
 import io.reactivex.Observable
 
@@ -32,8 +31,6 @@ interface MainView : QkView<MainState> {
     fun ratingClicked(): Observable<*>
     fun snackbarClicked(): Observable<*>
     fun backPressed(): Observable<*>
-
-    fun getRouter(): Router
 
     fun requestPermissions()
 }

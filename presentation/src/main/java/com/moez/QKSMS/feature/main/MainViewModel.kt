@@ -18,9 +18,11 @@
  */
 package com.moez.QKSMS.feature.main
 
+import com.bluelinelabs.conductor.Router
 import com.bluelinelabs.conductor.RouterTransaction
 import com.bluelinelabs.conductor.changehandler.FadeChangeHandler
 import com.moez.QKSMS.common.Navigator
+import com.moez.QKSMS.common.RouterProvider
 import com.moez.QKSMS.common.androidxcompat.scope
 import com.moez.QKSMS.common.base.QkViewModel
 import com.moez.QKSMS.common.util.BillingManager
@@ -47,9 +49,12 @@ class MainViewModel @Inject constructor(
         syncRepository: SyncRepository,
         private val navigator: Navigator,
         private val permissionManager: PermissionManager,
+        private val routerProvider: RouterProvider,
         private val ratingManager: RatingManager,
         private val syncMessages: SyncMessages
 ) : QkViewModel<MainView, MainState>(MainState()) {
+
+    private val router: Router get() = routerProvider.getRouter()
 
     init {
         disposables += markAllSeen
@@ -132,17 +137,17 @@ class MainViewModel @Inject constructor(
                 .autoDisposable(view.scope())
                 .subscribe {
                     when (it) {
-                        DrawerItem.INBOX -> view.getRouter().replaceTopController(
+                        DrawerItem.INBOX -> router.replaceTopController(
                                 RouterTransaction.with(ConversationsController())
                                         .popChangeHandler(FadeChangeHandler())
                                         .pushChangeHandler(FadeChangeHandler()))
 
-                        DrawerItem.ARCHIVED -> view.getRouter().replaceTopController(
+                        DrawerItem.ARCHIVED -> router.replaceTopController(
                                 RouterTransaction.with(ConversationsController(true))
                                         .popChangeHandler(FadeChangeHandler())
                                         .pushChangeHandler(FadeChangeHandler()))
 
-                        DrawerItem.SETTINGS -> view.getRouter().pushController(
+                        DrawerItem.SETTINGS -> router.pushController(
                                 RouterTransaction.with(SettingsController())
                                         .popChangeHandler(FadeChangeHandler())
                                         .pushChangeHandler(FadeChangeHandler()))

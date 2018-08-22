@@ -38,6 +38,7 @@ import com.bluelinelabs.conductor.RouterTransaction
 import com.jakewharton.rxbinding2.view.clicks
 import com.moez.QKSMS.R
 import com.moez.QKSMS.common.Navigator
+import com.moez.QKSMS.common.RouterProvider
 import com.moez.QKSMS.common.androidxcompat.drawerOpen
 import com.moez.QKSMS.common.androidxcompat.scope
 import com.moez.QKSMS.common.base.QkThemedActivity
@@ -59,7 +60,7 @@ import kotlinx.android.synthetic.main.main_activity.*
 import javax.inject.Inject
 
 
-class MainActivity : QkThemedActivity(), MainView, ControllerChangeHandler.ControllerChangeListener {
+class MainActivity : QkThemedActivity(), MainView, ControllerChangeHandler.ControllerChangeListener, RouterProvider {
 
     @Inject lateinit var navigator: Navigator
     @Inject lateinit var drawerBadgesExperiment: DrawerBadgesExperiment
