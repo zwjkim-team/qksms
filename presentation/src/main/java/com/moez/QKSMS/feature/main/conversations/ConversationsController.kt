@@ -139,6 +139,8 @@ class ConversationsController(
 
     override fun optionsItemSelected(): Observable<Int> = optionsItemSubject
 
+    override fun conversationClicks(): Observable<Long> = adapter.conversationClicks
+
     override fun archiveUndone(): Observable<*> = archiveUndoneSubject
 
     override fun conversationSwiped(): Observable<Pair<Long, Int>> = itemTouchCallback.swipes

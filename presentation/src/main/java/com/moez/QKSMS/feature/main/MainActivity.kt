@@ -20,7 +20,9 @@ package com.moez.QKSMS.feature.main
 
 import android.Manifest
 import android.animation.ObjectAnimator
+import android.content.Intent
 import android.content.res.ColorStateList
+import android.net.Uri
 import android.os.Bundle
 import android.view.Gravity
 import android.view.ViewGroup
@@ -38,6 +40,7 @@ import com.bluelinelabs.conductor.RouterTransaction
 import com.jakewharton.rxbinding2.view.clicks
 import com.moez.QKSMS.R
 import com.moez.QKSMS.common.Navigator
+import com.moez.QKSMS.common.QkChangeHandler
 import com.moez.QKSMS.common.RouterProvider
 import com.moez.QKSMS.common.androidxcompat.drawerOpen
 import com.moez.QKSMS.common.androidxcompat.scope
@@ -47,8 +50,10 @@ import com.moez.QKSMS.common.util.extensions.resolveThemeColor
 import com.moez.QKSMS.common.util.extensions.setBackgroundTint
 import com.moez.QKSMS.common.util.extensions.setTint
 import com.moez.QKSMS.common.util.extensions.setVisible
+import com.moez.QKSMS.feature.compose.ComposeController
 import com.moez.QKSMS.feature.main.conversations.ConversationsController
 import com.moez.QKSMS.feature.main.search.SearchController
+import com.moez.QKSMS.model.Attachment
 import com.moez.QKSMS.repository.SyncRepository
 import com.uber.autodispose.kotlin.autoDisposable
 import dagger.android.AndroidInjection
@@ -57,6 +62,7 @@ import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 import kotlinx.android.synthetic.main.drawer_view.*
 import kotlinx.android.synthetic.main.main_activity.*
+import java.net.URLDecoder
 import javax.inject.Inject
 
 
@@ -67,6 +73,7 @@ class MainActivity : QkThemedActivity(), MainView, ControllerChangeHandler.Contr
     @Inject lateinit var viewModelFactory: ViewModelProvider.Factory
 
     private lateinit var router: Router
+    private val pendingRouterTransactions: MutableList<RouterTransaction> = ArrayList()
 
     private val activityResumedSubject: Subject<Unit> = PublishSubject.create()
     private val backPressedSubject: Subject<Unit> = PublishSubject.create()
@@ -79,6 +86,15 @@ class MainActivity : QkThemedActivity(), MainView, ControllerChangeHandler.Contr
         super.onCreate(savedInstanceState)
         setContentView(R.layout.main_activity)
         viewModel.bindView(this)
+
+        router = Conductor.attachRouter(this, container, savedInstanceState)
+        router.addChangeListener(this)
+
+        if (!router.hasRootController()) {
+            router.setRoot(RouterTransaction.with(ConversationsController()))
+            pendingRouterTransactions.forEach(router::pushController)
+            pendingRouterTransactions.clear()
+        }
 
         toggle.syncState()
         toolbar.setNavigationOnClickListener {
@@ -114,12 +130,37 @@ class MainActivity : QkThemedActivity(), MainView, ControllerChangeHandler.Contr
 
         // Set the hamburger icon color
         toggle.drawerArrowDrawable.color = resolveThemeColor(android.R.attr.textColorSecondary)
+    }
 
-        router = Conductor.attachRouter(this, container, savedInstanceState)
-        router.addChangeListener(this)
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        if (intent == null) return
 
-        if (!router.hasRootController()) {
-            router.setRoot(RouterTransaction.with(ConversationsController()))
+        val query = intent.extras?.getString("query") ?: ""
+        val threadId = intent.extras?.getLong("threadId") ?: 0L
+        val address = intent.data?.let {
+            val data = it.toString()
+            val scheme = it.scheme ?: ""
+            when {
+                scheme.startsWith("smsto") -> data.replace("smsto:", "")
+                scheme.startsWith("mmsto") -> data.replace("mmsto:", "")
+                scheme.startsWith("sms") -> data.replace("sms:", "")
+                scheme.startsWith("mms") -> data.replace("mms:", "")
+                else -> ""
+            }
+        }?.let { if (it.contains('%')) URLDecoder.decode(it, "UTF-8") else it }
+                ?: ""// The dialer app on Oreo sends a URL encoded string, make sure to decode it
+        val sharedText = intent.extras?.getString(Intent.EXTRA_TEXT) ?: ""
+        val sharedAttachments = intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
+                ?.plus(intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM))
+                ?.map { Attachment(it) }
+                ?: listOf()
+
+        if (threadId != 0L || address.isNotEmpty() || sharedText.isNotEmpty() || sharedAttachments.isNotEmpty()) {
+            pushController(RouterTransaction
+                    .with(ComposeController(query, threadId, address, sharedText, sharedAttachments))
+                    .pushChangeHandler(QkChangeHandler())
+                    .popChangeHandler(QkChangeHandler()))
         }
     }
 
@@ -149,6 +190,14 @@ class MainActivity : QkThemedActivity(), MainView, ControllerChangeHandler.Contr
             drawerLayout.closeDrawer(Gravity.START)
         } else if (!router.popCurrentController()) {
             finish()
+        }
+    }
+
+    private fun pushController(transaction: RouterTransaction) {
+        if (::router.isInitialized) {
+            router.pushController(transaction)
+        } else {
+            pendingRouterTransactions += transaction
         }
     }
 

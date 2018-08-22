@@ -36,9 +36,8 @@ import androidx.core.app.TaskStackBuilder
 import com.moez.QKSMS.R
 import com.moez.QKSMS.common.util.extensions.dpToPx
 import com.moez.QKSMS.extensions.isImage
-import com.moez.QKSMS.feature.compose.ComposeActivity
+import com.moez.QKSMS.feature.main.MainActivity
 import com.moez.QKSMS.feature.qkreply.QkReplyActivity
-import com.moez.QKSMS.interactor.DeleteMessages
 import com.moez.QKSMS.manager.PermissionManager
 import com.moez.QKSMS.mapper.CursorToPartImpl
 import com.moez.QKSMS.receiver.DeleteMessagesReceiver
@@ -105,9 +104,9 @@ class NotificationManagerImpl @Inject constructor(
 
         val conversation = conversationRepo.getConversation(threadId) ?: return
 
-        val contentIntent = Intent(context, ComposeActivity::class.java).putExtra("threadId", threadId)
+        val contentIntent = Intent(context, MainActivity::class.java).putExtra("threadId", threadId)
         val taskStackBuilder = TaskStackBuilder.create(context)
-        taskStackBuilder.addParentStack(ComposeActivity::class.java)
+        taskStackBuilder.addParentStack(MainActivity::class.java)
         taskStackBuilder.addNextIntent(contentIntent)
         val contentPI = taskStackBuilder.getPendingIntent(threadId.toInt() + 10000, PendingIntent.FLAG_UPDATE_CURRENT)
 
@@ -268,9 +267,9 @@ class NotificationManagerImpl @Inject constructor(
         val conversation = conversationRepo.getConversation(message.threadId) ?: return
         val threadId = conversation.id
 
-        val contentIntent = Intent(context, ComposeActivity::class.java).putExtra("threadId", threadId)
+        val contentIntent = Intent(context, MainActivity::class.java).putExtra("threadId", threadId)
         val taskStackBuilder = TaskStackBuilder.create(context)
-        taskStackBuilder.addParentStack(ComposeActivity::class.java)
+        taskStackBuilder.addParentStack(MainActivity::class.java)
         taskStackBuilder.addNextIntent(contentIntent)
         val contentPI = taskStackBuilder.getPendingIntent(threadId.toInt() + 40000, PendingIntent.FLAG_UPDATE_CURRENT)
 

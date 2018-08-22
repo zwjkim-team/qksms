@@ -26,7 +26,7 @@
     android:animateLayoutChanges="true"
     android:background="?attr/composeBackground"
     android:orientation="vertical"
-    tools:context="com.moez.QKSMS.feature.compose.ComposeActivity">
+    tools:context=".feature.main.MainActivity">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/messageList"

@@ -31,9 +31,8 @@ import android.provider.Telephony
 import android.view.View
 import com.moez.QKSMS.BuildConfig
 import com.moez.QKSMS.feature.blocked.BlockedActivity
-import com.moez.QKSMS.feature.compose.ComposeActivity
-import com.moez.QKSMS.feature.conversationinfo.ConversationInfoActivity
 import com.moez.QKSMS.feature.gallery.GalleryActivity
+import com.moez.QKSMS.feature.main.MainActivity
 import com.moez.QKSMS.feature.notificationprefs.NotificationPrefsActivity
 import com.moez.QKSMS.feature.plus.PlusActivity
 import com.moez.QKSMS.feature.scheduled.ScheduledActivity
@@ -84,7 +83,7 @@ class Navigator @Inject constructor(
     }
 
     fun showCompose(body: String? = null, images: List<Uri>? = null) {
-        val intent = Intent(context, ComposeActivity::class.java)
+        val intent = Intent(context, MainActivity::class.java)
         intent.putExtra(Intent.EXTRA_TEXT, body)
 
         images?.takeIf { it.isNotEmpty() }?.let {
@@ -95,16 +94,9 @@ class Navigator @Inject constructor(
     }
 
     fun showConversation(threadId: Long, query: String? = null) {
-        val intent = Intent(context, ComposeActivity::class.java)
+        startActivity(Intent(context, MainActivity::class.java)
                 .putExtra("threadId", threadId)
-                .putExtra("query", query)
-        startActivity(intent)
-    }
-
-    fun showConversationInfo(threadId: Long) {
-        val intent = Intent(context, ConversationInfoActivity::class.java)
-        intent.putExtra("threadId", threadId)
-        startActivity(intent)
+                .putExtra("query", query))
     }
 
     fun showMedia(partId: Long) {

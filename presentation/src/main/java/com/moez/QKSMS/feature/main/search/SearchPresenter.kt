@@ -18,8 +18,11 @@
  */
 package com.moez.QKSMS.feature.main.search
 
+import com.bluelinelabs.conductor.RouterTransaction
+import com.moez.QKSMS.common.QkChangeHandler
 import com.moez.QKSMS.common.base.QkPresenter
 import com.moez.QKSMS.extensions.removeAccents
+import com.moez.QKSMS.feature.compose.ComposeController
 import com.moez.QKSMS.repository.ConversationRepository
 import com.uber.autodispose.kotlin.autoDisposable
 import io.reactivex.Observable
@@ -30,8 +33,6 @@ import javax.inject.Inject
 class SearchPresenter @Inject constructor(
         private val conversationRepo: ConversationRepository
 ) : QkPresenter<SearchView, SearchState>(SearchState()) {
-
-    private val defaultConversations by lazy { conversationRepo.getConversationsSnapshot() }
 
     override fun bindIntents(view: SearchView) {
         super.bindIntents(view)
@@ -47,6 +48,18 @@ class SearchPresenter @Inject constructor(
                 }
                 .autoDisposable(view.scope())
                 .subscribe { data -> newState { copy(loading = false, data = data) } }
+
+        view.searchResultClicks()
+                .autoDisposable(view.scope())
+                .subscribe { searchResult ->
+                    val query = searchResult.query.takeIf { searchResult.messages > 0 } ?: ""
+                    val threadId = searchResult.conversation.id
+
+                    view.getRouter().pushController(RouterTransaction
+                            .with(ComposeController(query, threadId))
+                            .pushChangeHandler(QkChangeHandler())
+                            .popChangeHandler(QkChangeHandler()))
+                }
     }
 
 }

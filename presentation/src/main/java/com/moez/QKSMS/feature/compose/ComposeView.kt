@@ -21,6 +21,7 @@ package com.moez.QKSMS.feature.compose
 import android.net.Uri
 import androidx.annotation.StringRes
 import androidx.core.view.inputmethod.InputContentInfoCompat
+import com.bluelinelabs.conductor.Router
 import com.moez.QKSMS.common.base.QkViewContract
 import com.moez.QKSMS.model.Attachment
 import com.moez.QKSMS.model.Contact
@@ -56,6 +57,8 @@ interface ComposeView : QkViewContract<ComposeState> {
     fun sendClicks(): Observable<*>
     fun qksmsPlusClicks(): Subject<*>
     fun backPresses(): Observable<*>
+
+    fun getRouter(): Router
 
     fun clearSelection()
     fun showDetails(details: String)

@@ -23,7 +23,9 @@ import com.bluelinelabs.conductor.RouterTransaction
 import com.bluelinelabs.conductor.changehandler.FadeChangeHandler
 import com.moez.QKSMS.R
 import com.moez.QKSMS.common.Navigator
+import com.moez.QKSMS.common.QkChangeHandler
 import com.moez.QKSMS.common.base.QkPresenter
+import com.moez.QKSMS.feature.compose.ComposeController
 import com.moez.QKSMS.feature.main.search.SearchController
 import com.moez.QKSMS.interactor.DeleteConversations
 import com.moez.QKSMS.interactor.MarkArchived
@@ -69,13 +71,19 @@ class ConversationsPresenter @Inject constructor(
 
         view.composeClicks()
                 .autoDisposable(view.scope())
-                .subscribe { navigator.showCompose() }
+                .subscribe {
+                    view.getRouter().pushController(RouterTransaction
+                            .with(ComposeController())
+                            .pushChangeHandler(QkChangeHandler())
+                            .popChangeHandler(QkChangeHandler()))
+                }
 
         view.optionsItemSelected()
                 .withLatestFrom(view.selectionChanges()) { itemId, conversations ->
                     when (itemId) {
                         R.id.search -> {
-                            view.getRouter().pushController(RouterTransaction.with(SearchController())
+                            view.getRouter().pushController(RouterTransaction
+                                    .with(SearchController())
                                     .popChangeHandler(FadeChangeHandler())
                                     .pushChangeHandler(FadeChangeHandler()))
                         }
@@ -120,6 +128,15 @@ class ConversationsPresenter @Inject constructor(
                 }
                 .autoDisposable(view.scope())
                 .subscribe()
+
+        view.conversationClicks()
+                .autoDisposable(view.scope())
+                .subscribe { threadId ->
+                    view.getRouter().pushController(RouterTransaction
+                            .with(ComposeController(threadId = threadId))
+                            .pushChangeHandler(QkChangeHandler())
+                            .popChangeHandler(QkChangeHandler()))
+                }
 
         view.selectionChanges()
                 .autoDisposable(view.scope())

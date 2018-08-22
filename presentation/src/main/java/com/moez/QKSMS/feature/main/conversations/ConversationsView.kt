@@ -25,6 +25,7 @@ import io.reactivex.Observable
 interface ConversationsView : QkViewContract<ConversationsState> {
 
     fun optionsItemSelected(): Observable<Int>
+    fun conversationClicks(): Observable<Long>
     fun conversationSwiped(): Observable<Pair<Long, Int>>
     fun archiveUndone(): Observable<*>
     fun selectionChanges(): Observable<List<Long>>

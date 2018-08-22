@@ -31,7 +31,6 @@ import android.widget.RemoteViews
 import com.moez.QKSMS.R
 import com.moez.QKSMS.common.util.Colors
 import com.moez.QKSMS.common.util.extensions.getColorCompat
-import com.moez.QKSMS.feature.compose.ComposeActivity
 import com.moez.QKSMS.feature.main.MainActivity
 import com.moez.QKSMS.manager.WidgetManager
 import com.moez.QKSMS.util.Preferences
@@ -143,12 +142,12 @@ class WidgetProvider : AppWidgetProvider() {
         remoteViews.setOnClickPendingIntent(R.id.title, mainPI)
 
         // Compose intent
-        val composeIntent = Intent(context, ComposeActivity::class.java)
+        val composeIntent = Intent(context, MainActivity::class.java)
         val composePI = PendingIntent.getActivity(context, 0, composeIntent, PendingIntent.FLAG_UPDATE_CURRENT)
         remoteViews.setOnClickPendingIntent(R.id.compose, composePI)
 
         // Conversation intent
-        val startActivityIntent = Intent(context, ComposeActivity::class.java)
+        val startActivityIntent = Intent(context, MainActivity::class.java)
         val startActivityPendingIntent = PendingIntent.getActivity(context, 0, startActivityIntent, PendingIntent.FLAG_UPDATE_CURRENT)
         remoteViews.setPendingIntentTemplate(R.id.conversations, startActivityPendingIntent)
 

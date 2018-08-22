@@ -25,6 +25,7 @@ import androidx.core.view.isVisible
 import com.moez.QKSMS.R
 import com.moez.QKSMS.common.base.QkController
 import com.moez.QKSMS.injection.appComponent
+import com.moez.QKSMS.model.SearchResult
 import com.uber.autodispose.kotlin.autoDisposable
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
@@ -80,6 +81,8 @@ class SearchController : QkController<SearchView, SearchState, SearchPresenter>(
     }
 
     override fun queryChanges(): Observable<CharSequence> = queryChangedSubject
+
+    override fun searchResultClicks(): Observable<SearchResult> = adapter.searchResultClicks
 
     override fun onMenuItemActionExpand(item: MenuItem?): Boolean = true
 

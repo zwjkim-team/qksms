@@ -48,10 +48,6 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-        <activity
-            android:name=".feature.compose.ComposeActivity"
-            android:parentActivityName=".feature.main.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.MAIN" />
@@ -82,7 +78,6 @@
         <activity
             android:name=".feature.gallery.GalleryActivity"
             android:theme="@style/AppThemeBlack" />
-        <activity android:name=".feature.conversationinfo.ConversationInfoActivity" />
         <activity android:name=".feature.notificationprefs.NotificationPrefsActivity" />
         <activity android:name=".feature.blocked.BlockedActivity" />
         <activity

@@ -23,8 +23,10 @@ import android.telephony.PhoneNumberUtils
 import android.telephony.SmsMessage
 import android.view.inputmethod.EditorInfo
 import androidx.core.widget.toast
+import com.bluelinelabs.conductor.RouterTransaction
 import com.moez.QKSMS.R
 import com.moez.QKSMS.common.Navigator
+import com.moez.QKSMS.common.QkChangeHandler
 import com.moez.QKSMS.common.base.QkPresenter
 import com.moez.QKSMS.common.util.BillingManager
 import com.moez.QKSMS.common.util.ClipboardUtils
@@ -36,6 +38,7 @@ import com.moez.QKSMS.extensions.asObservable
 import com.moez.QKSMS.extensions.isImage
 import com.moez.QKSMS.extensions.mapNotNull
 import com.moez.QKSMS.extensions.removeAccents
+import com.moez.QKSMS.feature.conversationinfo.ConversationInfoController
 import com.moez.QKSMS.filter.ContactFilter
 import com.moez.QKSMS.interactor.AddScheduledMessage
 import com.moez.QKSMS.interactor.CancelDelayedMessage
@@ -307,7 +310,12 @@ class ComposePresenter @Inject constructor(
                 .filter { it == R.id.info }
                 .withLatestFrom(conversation) { _, conversation -> conversation }
                 .autoDisposable(view.scope())
-                .subscribe { conversation -> navigator.showConversationInfo(conversation.id) }
+                .subscribe { conversation ->
+                    view.getRouter().pushController(RouterTransaction
+                            .with(ConversationInfoController(conversation.id))
+                            .pushChangeHandler(QkChangeHandler())
+                            .popChangeHandler(QkChangeHandler()))
+                }
 
         // Copy the message contents
         view.optionItemSelected()
@@ -345,8 +353,11 @@ class ComposePresenter @Inject constructor(
                 .filter { it == R.id.forward }
                 .withLatestFrom(view.messagesSelected()) { _, messages ->
                     messages?.firstOrNull()?.let { messageRepo.getMessage(it) }?.let { message ->
-                        val images = message.parts.filter { it.isImage() }.mapNotNull { it.getUri() }
-                        navigator.showCompose(message.body, images)
+                        val images = message.parts.filter { it.isImage() }.mapNotNull { it.getUri() }.map { Attachment(it) }
+                        view.getRouter().pushController(RouterTransaction
+                                .with(ComposeController(sharedText = message.body, sharedAttachments = images))
+                                .pushChangeHandler(QkChangeHandler())
+                                .popChangeHandler(QkChangeHandler()))
                     }
                 }
                 .autoDisposable(view.scope())

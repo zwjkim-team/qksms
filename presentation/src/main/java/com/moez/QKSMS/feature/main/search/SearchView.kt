@@ -18,11 +18,16 @@
  */
 package com.moez.QKSMS.feature.main.search
 
+import com.bluelinelabs.conductor.Router
 import com.moez.QKSMS.common.base.QkViewContract
+import com.moez.QKSMS.model.SearchResult
 import io.reactivex.Observable
 
 interface SearchView : QkViewContract<SearchState> {
 
+    fun getRouter(): Router
+
     fun queryChanges(): Observable<CharSequence>
+    fun searchResultClicks(): Observable<SearchResult>
 
 }

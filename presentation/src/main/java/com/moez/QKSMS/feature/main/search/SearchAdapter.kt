@@ -25,22 +25,24 @@ import android.text.style.BackgroundColorSpan
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import com.moez.QKSMS.R
-import com.moez.QKSMS.common.Navigator
 import com.moez.QKSMS.common.base.QkAdapter
 import com.moez.QKSMS.common.base.QkViewHolder
 import com.moez.QKSMS.common.util.Colors
 import com.moez.QKSMS.common.util.DateFormatter
 import com.moez.QKSMS.common.util.extensions.setVisible
 import com.moez.QKSMS.model.SearchResult
+import io.reactivex.subjects.PublishSubject
+import io.reactivex.subjects.Subject
 import kotlinx.android.synthetic.main.search_list_item.view.*
 import javax.inject.Inject
 
 class SearchAdapter @Inject constructor(
         colors: Colors,
         private val context: Context,
-        private val dateFormatter: DateFormatter,
-        private val navigator: Navigator
+        private val dateFormatter: DateFormatter
 ) : QkAdapter<SearchResult>() {
+
+    val searchResultClicks: Subject<SearchResult> = PublishSubject.create()
 
     private var highlightColor: Int = colors.theme().highlight
 
@@ -50,7 +52,7 @@ class SearchAdapter @Inject constructor(
         return QkViewHolder(view).apply {
             view.setOnClickListener {
                 val result = getItem(adapterPosition)
-                navigator.showConversation(result.conversation.id, result.query.takeIf { result.messages > 0 })
+                searchResultClicks.onNext(result)
             }
         }
     }

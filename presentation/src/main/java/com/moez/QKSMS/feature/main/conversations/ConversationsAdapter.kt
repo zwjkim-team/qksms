@@ -24,20 +24,22 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.view.isVisible
 import com.moez.QKSMS.R
-import com.moez.QKSMS.common.Navigator
 import com.moez.QKSMS.common.base.QkRealmAdapter
 import com.moez.QKSMS.common.base.QkViewHolder
 import com.moez.QKSMS.common.util.DateFormatter
 import com.moez.QKSMS.common.util.extensions.resolveThemeColor
 import com.moez.QKSMS.model.Conversation
+import io.reactivex.subjects.PublishSubject
+import io.reactivex.subjects.Subject
 import kotlinx.android.synthetic.main.conversation_list_item.view.*
 import javax.inject.Inject
 
 class ConversationsAdapter @Inject constructor(
         private val context: Context,
-        private val dateFormatter: DateFormatter,
-        private val navigator: Navigator
+        private val dateFormatter: DateFormatter
 ) : QkRealmAdapter<Conversation>() {
+
+    val conversationClicks: Subject<Long> = PublishSubject.create()
 
     init {
         setHasStableIds(true)
@@ -65,7 +67,7 @@ class ConversationsAdapter @Inject constructor(
                 val conversation = getItem(adapterPosition)!!
                 when (toggleSelection(conversation.id, false)) {
                     true -> view.isActivated = isSelected(conversation.id)
-                    false -> navigator.showConversation(conversation.id)
+                    false -> conversationClicks.onNext(conversation.id)
                 }
             }
             view.setOnLongClickListener {
