@@ -55,6 +55,7 @@ import com.moez.QKSMS.model.Contact
 import com.moez.QKSMS.model.Message
 import com.uber.autodispose.kotlin.autoDisposable
 import io.reactivex.Observable
+import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 import kotlinx.android.synthetic.main.compose_controller.*
@@ -83,7 +84,7 @@ class ComposeController(
 
     @Inject override lateinit var presenter: ComposePresenter
 
-    private val activityVisibleSubject: Subject<Boolean> = PublishSubject.create()
+    private val activityVisibleSubject: Subject<Boolean> = BehaviorSubject.createDefault(true)
     private val queryChangeSubject: Subject<CharSequence> = PublishSubject.create()
     private val queryBackspaceSubject: Subject<Unit> = PublishSubject.create()
     private val queryEditorActionsSubject: Subject<Int> = PublishSubject.create()
