@@ -64,6 +64,8 @@ class NotificationManagerImpl @Inject constructor(
 
     companion object {
         const val DEFAULT_CHANNEL_ID = "notifications_default"
+        const val BACKUP_RESTORE_CHANNEL_ID = "notifications_backup_restore"
+
         val VIBRATE_PATTERN = longArrayOf(0, 200, 0, 200)
     }
 
@@ -296,12 +298,14 @@ class NotificationManagerImpl @Inject constructor(
         val responseSet = context.resources.getStringArray(R.array.qk_responses)
         val remoteInput = RemoteInput.Builder("body")
                 .setLabel(title)
-                .setChoices(responseSet)
-                .build()
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+            remoteInput.setChoices(responseSet)
+        }
 
         return NotificationCompat.Action.Builder(R.drawable.ic_reply_white_24dp, title, replyPI)
                 .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_REPLY)
-                .addRemoteInput(remoteInput)
+                .addRemoteInput(remoteInput.build())
                 .build()
     }
 
@@ -371,6 +375,27 @@ class NotificationManagerImpl @Inject constructor(
             0L -> DEFAULT_CHANNEL_ID
             else -> "notifications_$threadId"
         }
+    }
+
+    override fun getNotificationForBackup(): NotificationCompat.Builder {
+        if (Build.VERSION.SDK_INT >= 26) {
+            val name = context.getString(R.string.backup_notification_channel_name)
+            val importance = NotificationManager.IMPORTANCE_LOW
+            val channel = NotificationChannel(BACKUP_RESTORE_CHANNEL_ID, name, importance)
+            val notificationManager = context.getSystemService(NotificationManager::class.java)
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        return NotificationCompat.Builder(context, BACKUP_RESTORE_CHANNEL_ID)
+                .setContentTitle(context.getString(R.string.backup_restoring))
+                .setShowWhen(false)
+                .setWhen(System.currentTimeMillis()) // Set this anyway in case it's shown
+                .setSmallIcon(R.drawable.ic_file_download_black_24dp)
+                .setColor(colors.theme().theme)
+                .setCategory(NotificationCompat.CATEGORY_PROGRESS)
+                .setPriority(NotificationCompat.PRIORITY_MIN)
+                .setProgress(0, 0, true)
+                .setOngoing(true)
     }
 
 }

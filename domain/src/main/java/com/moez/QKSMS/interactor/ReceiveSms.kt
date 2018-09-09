@@ -22,10 +22,10 @@ import android.telephony.SmsMessage
 import com.moez.QKSMS.extensions.mapNotNull
 import com.moez.QKSMS.manager.ExternalBlockingManager
 import com.moez.QKSMS.manager.NotificationManager
+import com.moez.QKSMS.manager.ShortcutManager
 import com.moez.QKSMS.repository.ConversationRepository
 import com.moez.QKSMS.repository.MessageRepository
 import io.reactivex.Flowable
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class ReceiveSms @Inject constructor(
@@ -33,7 +33,8 @@ class ReceiveSms @Inject constructor(
         private val externalBlockingManager: ExternalBlockingManager,
         private val messageRepo: MessageRepository,
         private val notificationManager: NotificationManager,
-        private val updateBadge: UpdateBadge
+        private val updateBadge: UpdateBadge,
+        private val shortcutManager: ShortcutManager
 ) : Interactor<ReceiveSms.Params>() {
 
     class Params(val subId: Int, val messages: Array<SmsMessage>)
@@ -51,8 +52,8 @@ class ReceiveSms @Inject constructor(
                     val address = messages[0].displayOriginatingAddress
                     val time = messages[0].timestampMillis
                     val body: String = messages
-                            .map { message -> message.displayMessageBody }
-                            .reduce { body, new -> body + new }
+                            .mapNotNull { message -> message.displayMessageBody }
+                            .reduce { body, new -> body + new } ?: ""
 
                     messageRepo.insertReceivedSms(it.subId, address, body, time) // Add the message to the db
                 }
@@ -61,8 +62,8 @@ class ReceiveSms @Inject constructor(
                 .filter { conversation -> !conversation.blocked } // Don't notify for blocked conversations
                 .doOnNext { conversation -> if (conversation.archived) conversationRepo.markUnarchived(conversation.id) } // Unarchive conversation if necessary
                 .map { conversation -> conversation.id } // Map to the id because [delay] will put us on the wrong thread
-                .delay(1, TimeUnit.SECONDS) // Wait one second before trying to notify, in case the foreground app marks it as read first
                 .doOnNext { threadId -> notificationManager.update(threadId) } // Update the notification
+                .doOnNext { shortcutManager.updateShortcuts() } // Update shortcuts
                 .flatMap { updateBadge.buildObservable(Unit) } // Update the badge
     }
 

@@ -20,6 +20,7 @@ package com.moez.QKSMS.injection
 
 import com.moez.QKSMS.common.QKApplication
 import com.moez.QKSMS.common.QkDialog
+import com.moez.QKSMS.common.util.QkChooserTargetService
 import com.moez.QKSMS.common.widget.AvatarView
 import com.moez.QKSMS.common.widget.ChipLayout
 import com.moez.QKSMS.common.widget.PagerTitleView
@@ -27,8 +28,9 @@ import com.moez.QKSMS.common.widget.PreferenceView
 import com.moez.QKSMS.common.widget.QkEditText
 import com.moez.QKSMS.common.widget.QkSwitch
 import com.moez.QKSMS.common.widget.QkTextView
-import com.moez.QKSMS.feature.compose.injection.ComposeComponent
+import com.moez.QKSMS.feature.backup.BackupController
 import com.moez.QKSMS.feature.compose.DetailedChipView
+import com.moez.QKSMS.feature.compose.injection.ComposeComponent
 import com.moez.QKSMS.feature.conversationinfo.injection.ConversationInfoComponent
 import com.moez.QKSMS.feature.main.conversations.injection.ConversationsComponent
 import com.moez.QKSMS.feature.main.search.SearchController
@@ -62,6 +64,7 @@ interface AppComponent {
     fun inject(application: QKApplication)
 
     fun inject(controller: AboutController)
+    fun inject(controller: BackupController)
     fun inject(controller: SearchController)
     fun inject(controller: SettingsController)
     fun inject(controller: SwipeActionsController)
@@ -71,6 +74,11 @@ interface AppComponent {
     fun inject(fetcher: ContactImageLoader.ContactImageFetcher)
 
     fun inject(service: WidgetAdapter)
+
+    /**
+     * This can't use AndroidInjection, or else it will crash on pre-marshmallow devices
+     */
+    fun inject(service: QkChooserTargetService)
 
     fun inject(view: AvatarView)
     fun inject(view: ChipLayout)

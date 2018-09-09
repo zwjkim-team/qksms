@@ -149,7 +149,7 @@ class ConversationsPresenter @Inject constructor(
                             .sumBy { if (it.read) -1 else 1 } >= 0
                     val selected = selection.size
 
-                    newState { copy(markPinned = pin, markRead = read, selected = selected, showClearButton = selected > 0) }
+                    newState { copy(markPinned = pin, markRead = read, selected = selected) }
                 }
 
         // Delete the conversation

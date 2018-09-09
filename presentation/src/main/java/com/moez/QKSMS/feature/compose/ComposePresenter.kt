@@ -23,6 +23,7 @@ import android.telephony.PhoneNumberUtils
 import android.telephony.SmsMessage
 import android.view.inputmethod.EditorInfo
 import androidx.core.widget.toast
+import androidx.lifecycle.Transformations.map
 import com.bluelinelabs.conductor.RouterTransaction
 import com.moez.QKSMS.R
 import com.moez.QKSMS.common.Navigator
@@ -47,6 +48,7 @@ import com.moez.QKSMS.interactor.DeleteMessages
 import com.moez.QKSMS.interactor.MarkRead
 import com.moez.QKSMS.interactor.RetrySending
 import com.moez.QKSMS.interactor.SendMessage
+import com.moez.QKSMS.manager.ActiveConversationManager
 import com.moez.QKSMS.manager.PermissionManager
 import com.moez.QKSMS.model.Attachment
 import com.moez.QKSMS.model.Contact
@@ -71,7 +73,6 @@ import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 import io.realm.RealmList
 import java.util.*
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -82,6 +83,7 @@ class ComposePresenter @Inject constructor(
         @Named("text") private val sharedText: String,
         @Named("attachments") private val sharedAttachments: List<Attachment>,
         private val context: Context,
+        private val activeConversationManager: ActiveConversationManager,
         private val addScheduledMessage: AddScheduledMessage,
         private val billingManager: BillingManager,
         private val cancelMessage: CancelDelayedMessage,
@@ -133,9 +135,15 @@ class ComposePresenter @Inject constructor(
                 .doOnNext { newState { copy(loading = false) } }
                 .mergeWith(threadIdSubject)
                 .switchMap { threadId ->
+                    // Query the entire list of conversations and map from there, rather than
+                    // directly querying the conversation from realm. If querying a single
+                    // conversation and it doesn't exist yet, the realm query will never update
                     conversationRepo.getConversations().asObservable()
-                            .map { conversations -> conversations.filter { it.id == threadId } }
-                            .map { conversations -> conversations.firstOrNull() ?: Conversation(id = threadId) }
+                            .map { conversations ->
+                                conversations.firstOrNull { it.id == threadId }
+                                        ?: conversationRepo.getOrCreateConversation(threadId)
+                                        ?: Conversation(id = threadId)
+                            }
                 }
                 .mergeWith(initialConversation)
                 .filter { conversation -> conversation.isLoaded }
@@ -158,7 +166,7 @@ class ComposePresenter @Inject constructor(
                 .takeUntil(state.filter { state -> !state.editingMode })
                 .subscribe(selectedContacts::onNext)
 
-        // When the conversation changes, update the threadId and the messages for the adapter
+        // When the conversation changes, mark read, and update the threadId and the messages for the adapter
         disposables += conversation
                 .distinctUntilChanged { conversation -> conversation.id }
                 .observeOn(AndroidSchedulers.mainThread())
@@ -168,7 +176,7 @@ class ComposePresenter @Inject constructor(
                     messages
                 }
                 .switchMap { messages -> messages.asObservable() }
-                .subscribe { messages.onNext(it) }
+                .subscribe(messages::onNext)
 
         disposables += conversation
                 .map { conversation -> conversation.getTitle() }
@@ -431,6 +439,24 @@ class ComposePresenter @Inject constructor(
                 .autoDisposable(view.scope())
                 .subscribe { message -> cancelMessage.execute(message.id) }
 
+        // Set the current conversation
+        Observables
+                .combineLatest(
+                        view.activityVisible().distinctUntilChanged(),
+                        conversation.mapNotNull { conversation -> conversation.takeIf { it.isValid }?.id }.distinctUntilChanged())
+                { visible, threadId ->
+                    when (visible) {
+                        true -> {
+                            activeConversationManager.setActiveConversation(threadId)
+                            markRead.execute(listOf(threadId))
+                        }
+
+                        false -> activeConversationManager.setActiveConversation(null)
+                    }
+                }
+                .autoDisposable(view.scope())
+                .subscribe()
+
         // Save draft when the activity goes into the background
         view.activityVisible()
                 .filter { visible -> !visible }
@@ -442,15 +468,6 @@ class ComposePresenter @Inject constructor(
                 }
                 .autoDisposable(view.scope())
                 .subscribe()
-
-        // Mark the conversation read, if in foreground
-        Observables.combineLatest(messages, view.activityVisible()) { _, visible -> visible }
-                .filter { visible -> visible }
-                .withLatestFrom(conversation) { _, conversation -> conversation }
-                .mapNotNull { conversation -> conversation.takeIf { it.isValid }?.id }
-                .debounce(200, TimeUnit.MILLISECONDS)
-                .autoDisposable(view.scope())
-                .subscribe { threadId -> markRead.execute(listOf(threadId)) }
 
         // Open the attachment options
         view.attachClicks()
@@ -539,7 +556,7 @@ class ComposePresenter @Inject constructor(
         // Show the remaining character counter when necessary
         view.textChanged()
                 .observeOn(Schedulers.computation())
-                .mapNotNull { draft -> tryOrNull { SmsMessage.calculateLength(draft, false) } }
+                .mapNotNull { draft -> tryOrNull { SmsMessage.calculateLength(draft, prefs.unicode.get()) } }
                 .map { array ->
                     val messages = array[0]
                     val remaining = array[2]
@@ -576,6 +593,11 @@ class ComposePresenter @Inject constructor(
 
         // Send a message when the send button is clicked, and disable editing mode if it's enabled
         view.sendClicks()
+                .filter {
+                    val hasPermission = permissionManager.hasSendSms()
+                    if (!hasPermission) view.requestSmsPermission()
+                    hasPermission
+                }
                 .withLatestFrom(view.textChanged()) { _, body -> body }
                 .map { body -> body.toString() }
                 .withLatestFrom(state, attachments, conversation, selectedContacts) { body, state, attachments, conversation, contacts ->

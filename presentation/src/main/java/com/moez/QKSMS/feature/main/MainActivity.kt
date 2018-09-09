@@ -28,6 +28,7 @@ import android.view.Gravity
 import android.view.ViewGroup
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.core.app.ActivityCompat
+import androidx.core.view.GravityCompat
 import androidx.core.view.isVisible
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.ViewModelProvider
@@ -80,6 +81,7 @@ class MainActivity : QkThemedActivity(), MainView, ControllerChangeHandler.Contr
 
     private val viewModel by lazy { ViewModelProviders.of(this, viewModelFactory)[MainViewModel::class.java] }
     private val toggle by lazy { ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.main_drawer_open_cd, 0) }
+    private val progressAnimator by lazy { ObjectAnimator.ofInt(syncingProgress, "progress", 0, 0) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         AndroidInjection.inject(this)
@@ -99,8 +101,8 @@ class MainActivity : QkThemedActivity(), MainView, ControllerChangeHandler.Contr
         toggle.syncState()
         toolbar.setNavigationOnClickListener {
             dismissKeyboard()
-            if (drawerLayout.getDrawerLockMode(Gravity.START) == DrawerLayout.LOCK_MODE_UNLOCKED) {
-                drawerLayout.openDrawer(Gravity.START)
+            if (drawerLayout.getDrawerLockMode(GravityCompat.START) == DrawerLayout.LOCK_MODE_UNLOCKED) {
+                drawerLayout.openDrawer(GravityCompat.START)
             } else {
                 onBackPressed()
             }
@@ -121,8 +123,10 @@ class MainActivity : QkThemedActivity(), MainView, ControllerChangeHandler.Contr
                     archivedIcon.imageTintList = tintList
 
                     // Miscellaneous views
-                    plusBadge.setBackgroundTint(theme.theme)
-                    plusBadge.setTextColor(theme.textPrimary)
+                    listOf(plusBadge1, plusBadge2).forEach { badge ->
+                        badge.setBackgroundTint(theme.theme)
+                        badge.setTextColor(theme.textPrimary)
+                    }
                     syncingProgress.indeterminateTintList = ColorStateList.valueOf(theme.theme)
                     plusIcon.setTint(theme.theme)
                     rateIcon.setTint(theme.theme)
@@ -182,12 +186,12 @@ class MainActivity : QkThemedActivity(), MainView, ControllerChangeHandler.Contr
         drawerLayout.setDrawerLockMode(when (show) {
             true -> DrawerLayout.LOCK_MODE_LOCKED_CLOSED
             false -> DrawerLayout.LOCK_MODE_UNLOCKED
-        }, Gravity.START)
+        }, GravityCompat.START)
     }
 
     override fun onBackPressed() {
-        if (drawerLayout.isDrawerOpen(Gravity.START)) {
-            drawerLayout.closeDrawer(Gravity.START)
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START)
         } else if (!router.popCurrentController()) {
             finish()
         }
@@ -202,17 +206,30 @@ class MainActivity : QkThemedActivity(), MainView, ControllerChangeHandler.Contr
     }
 
     override fun render(state: MainState) {
-        plusBadge.isVisible = drawerBadgesExperiment.variant && !state.upgraded
+        listOf(plusBadge1, plusBadge2).forEach { badge ->
+            badge.isVisible = drawerBadgesExperiment.variant && !state.upgraded
+        }
         plus.isVisible = state.upgraded
         plusBanner.isVisible = !state.upgraded
         rateLayout.setVisible(state.showRating)
 
-        if (drawerLayout.isDrawerOpen(Gravity.START) && !state.drawerOpen) drawerLayout.closeDrawer(Gravity.START)
-        else if (!drawerLayout.isDrawerVisible(Gravity.START) && state.drawerOpen) drawerLayout.openDrawer(Gravity.START)
+        if (drawerLayout.isDrawerOpen(GravityCompat.START) && !state.drawerOpen) drawerLayout.closeDrawer(GravityCompat.START)
+        else if (!drawerLayout.isDrawerVisible(GravityCompat.START) && state.drawerOpen) drawerLayout.openDrawer(GravityCompat.START)
 
-        syncing.setVisible(state.syncing is SyncRepository.SyncProgress.Running)
-        snackbar.setVisible(state.syncing is SyncRepository.SyncProgress.Idle
-                && !state.defaultSms || !state.smsPermission || !state.contactPermission)
+        when (state.syncing) {
+            is SyncRepository.SyncProgress.Idle -> {
+                syncing.isVisible = false
+                snackbar.isVisible = !state.defaultSms || !state.smsPermission || !state.contactPermission
+            }
+
+            is SyncRepository.SyncProgress.Running -> {
+                syncing.isVisible = true
+                syncingProgress.max = state.syncing.max
+                progressAnimator.apply { setIntValues(syncingProgress.progress, state.syncing.progress) }.start()
+                syncingProgress.isIndeterminate = state.syncing.indeterminate
+                snackbar.isVisible = false
+            }
+        }
 
         when {
             !state.smsPermission -> {
@@ -244,6 +261,7 @@ class MainActivity : QkThemedActivity(), MainView, ControllerChangeHandler.Contr
     override fun drawerItemSelected(): Observable<DrawerItem> = Observable.merge(listOf(
             inbox.clicks().map { DrawerItem.INBOX },
             archived.clicks().map { DrawerItem.ARCHIVED },
+            backup.clicks().map { DrawerItem.BACKUP },
             scheduled.clicks().map { DrawerItem.SCHEDULED },
             blocking.clicks().map { DrawerItem.BLOCKING },
             settings.clicks().map { DrawerItem.SETTINGS },
@@ -263,9 +281,10 @@ class MainActivity : QkThemedActivity(), MainView, ControllerChangeHandler.Contr
 
     override fun getRouter(): Router = router
 
-    override fun requestPermissions() {
-        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_CONTACTS, Manifest.permission.READ_SMS), 0)
-    }
+    override fun requestPermissions() = ActivityCompat.requestPermissions(this, arrayOf(
+            Manifest.permission.READ_CONTACTS,
+            Manifest.permission.READ_SMS,
+            Manifest.permission.SEND_SMS), 0)
 
     override fun onChangeStarted(to: Controller?, from: Controller?, isPush: Boolean, container: ViewGroup, handler: ControllerChangeHandler) {
         toolbar.menu.findItem(R.id.search)?.isVisible = to is ConversationsController || to is SearchController

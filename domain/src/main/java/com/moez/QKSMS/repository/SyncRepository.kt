@@ -26,7 +26,7 @@ interface SyncRepository {
 
     sealed class SyncProgress {
         class Idle : SyncProgress()
-        class Running(progress: Float) : SyncProgress()
+        data class Running(val max: Int, val progress: Int, val indeterminate: Boolean) : SyncProgress()
     }
 
     val syncProgress: Observable<SyncProgress>
@@ -36,5 +36,12 @@ interface SyncRepository {
     fun syncMessage(uri: Uri): Message?
 
     fun syncContacts()
+
+    /**
+     * Syncs a single contact to the Realm
+     *
+     * Return false if the contact couldn't be found
+     */
+    fun syncContact(address: String): Boolean
 
 }

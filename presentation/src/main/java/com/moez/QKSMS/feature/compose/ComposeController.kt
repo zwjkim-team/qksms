@@ -315,6 +315,14 @@ class ComposeController(
         }
     }
 
+    override fun requestSmsPermission() {
+        activity?.run {
+            ActivityCompat.requestPermissions(this, arrayOf(
+                    Manifest.permission.READ_SMS,
+                    Manifest.permission.SEND_SMS), 0)
+        }
+    }
+
     override fun requestDatePicker() {
         activity?.apply {
             val calendar = Calendar.getInstance()
@@ -338,7 +346,7 @@ class ComposeController(
 
         val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
                 .putExtra(MediaStore.EXTRA_OUTPUT, cameraDestination)
-        startActivityForResult(intent, CAMERA_REQUEST_CODE)
+        startActivityForResult(Intent.createChooser(intent, null), CAMERA_REQUEST_CODE)
     }
 
     override fun requestGallery() {
@@ -348,7 +356,7 @@ class ComposeController(
                 .putExtra(Intent.EXTRA_LOCAL_ONLY, false)
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 .setType("image/*")
-        startActivityForResult(intent, GALLERY_REQUEST_CODE)
+        startActivityForResult(Intent.createChooser(intent, null), GALLERY_REQUEST_CODE)
     }
 
     override fun setDraft(draft: String) {

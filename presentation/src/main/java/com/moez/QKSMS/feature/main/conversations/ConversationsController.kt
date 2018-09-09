@@ -114,7 +114,7 @@ class ConversationsController(
     }
 
     override fun render(state: ConversationsState) {
-        showBackButton(state.showClearButton)
+        showBackButton(state.selected > 0)
 
         setTitle(when {
             state.selected != 0 -> activity?.getString(R.string.main_title_selected, state.selected)

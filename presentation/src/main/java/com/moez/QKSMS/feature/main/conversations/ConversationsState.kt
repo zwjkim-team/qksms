@@ -22,7 +22,6 @@ import com.moez.QKSMS.model.Conversation
 import io.realm.RealmResults
 
 data class ConversationsState(
-        val showClearButton: Boolean = false,
         val markPinned: Boolean = true,
         val markRead: Boolean = false,
         val conversations: RealmResults<Conversation>? = null,

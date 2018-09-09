@@ -35,4 +35,4 @@ interface MainView : QkView<MainState> {
     fun requestPermissions()
 }
 
-enum class DrawerItem { INBOX, ARCHIVED, SCHEDULED, BLOCKING, SETTINGS, PLUS, HELP, INVITE }
+enum class DrawerItem { INBOX, ARCHIVED, BACKUP, SCHEDULED, BLOCKING, SETTINGS, PLUS, HELP, INVITE }

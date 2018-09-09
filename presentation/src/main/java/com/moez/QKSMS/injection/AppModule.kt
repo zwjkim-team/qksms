@@ -26,10 +26,15 @@ import androidx.lifecycle.ViewModelProvider
 import com.f2prateek.rx.preferences2.RxSharedPreferences
 import com.moez.QKSMS.common.ViewModelFactory
 import com.moez.QKSMS.common.util.NotificationManagerImpl
+import com.moez.QKSMS.common.util.ShortcutManagerImpl
 import com.moez.QKSMS.feature.compose.injection.ComposeComponent
 import com.moez.QKSMS.feature.conversationinfo.injection.ConversationInfoComponent
 import com.moez.QKSMS.feature.main.conversations.injection.ConversationsComponent
 import com.moez.QKSMS.feature.themepicker.injection.ThemePickerComponent
+import com.moez.QKSMS.listener.ContactAddedListener
+import com.moez.QKSMS.listener.ContactAddedListenerImpl
+import com.moez.QKSMS.manager.ActiveConversationManager
+import com.moez.QKSMS.manager.ActiveConversationManagerImpl
 import com.moez.QKSMS.manager.AlarmManager
 import com.moez.QKSMS.manager.AlarmManagerImpl
 import com.moez.QKSMS.manager.AnalyticsManager
@@ -42,6 +47,7 @@ import com.moez.QKSMS.manager.NotificationManager
 import com.moez.QKSMS.manager.PermissionManager
 import com.moez.QKSMS.manager.PermissionManagerImpl
 import com.moez.QKSMS.manager.RatingManager
+import com.moez.QKSMS.manager.ShortcutManager
 import com.moez.QKSMS.manager.WidgetManager
 import com.moez.QKSMS.manager.WidgetManagerImpl
 import com.moez.QKSMS.mapper.CursorToContact
@@ -55,6 +61,8 @@ import com.moez.QKSMS.mapper.CursorToPartImpl
 import com.moez.QKSMS.mapper.CursorToRecipient
 import com.moez.QKSMS.mapper.CursorToRecipientImpl
 import com.moez.QKSMS.mapper.RatingManagerImpl
+import com.moez.QKSMS.repository.BackupRepository
+import com.moez.QKSMS.repository.BackupRepositoryImpl
 import com.moez.QKSMS.repository.ContactRepository
 import com.moez.QKSMS.repository.ContactRepositoryImpl
 import com.moez.QKSMS.repository.ConversationRepository
@@ -67,6 +75,7 @@ import com.moez.QKSMS.repository.ScheduledMessageRepository
 import com.moez.QKSMS.repository.ScheduledMessageRepositoryImpl
 import com.moez.QKSMS.repository.SyncRepository
 import com.moez.QKSMS.repository.SyncRepositoryImpl
+import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton
@@ -93,9 +102,23 @@ class AppModule(private var application: Application) {
     }
 
     @Provides
+    @Singleton
+    fun provideMoshi(): Moshi {
+        return Moshi.Builder().build()
+    }
+
+    @Provides
     fun provideViewModelFactory(factory: ViewModelFactory): ViewModelProvider.Factory = factory
 
+    // Listener
+
+    @Provides
+    fun provideContactAddedListener(listener: ContactAddedListenerImpl): ContactAddedListener = listener
+
     // Manager
+
+    @Provides
+    fun provideActiveConversationManager(manager: ActiveConversationManagerImpl): ActiveConversationManager = manager
 
     @Provides
     fun provideAlarmManager(manager: AlarmManagerImpl): AlarmManager = manager
@@ -117,6 +140,9 @@ class AppModule(private var application: Application) {
 
     @Provides
     fun provideRatingManager(manager: RatingManagerImpl): RatingManager = manager
+
+    @Provides
+    fun provideShortcutManager(manager: ShortcutManagerImpl): ShortcutManager = manager
 
     @Provides
     fun provideWidgetManager(manager: WidgetManagerImpl): WidgetManager = manager
@@ -141,6 +167,9 @@ class AppModule(private var application: Application) {
 
 
     // Repository
+
+    @Provides
+    fun provideBackupRepository(repository: BackupRepositoryImpl): BackupRepository = repository
 
     @Provides
     fun provideContactRepository(repository: ContactRepositoryImpl): ContactRepository = repository
