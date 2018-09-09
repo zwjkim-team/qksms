@@ -26,11 +26,13 @@ import com.moez.QKSMS.common.RouterProvider
 import com.moez.QKSMS.common.androidxcompat.scope
 import com.moez.QKSMS.common.base.QkViewModel
 import com.moez.QKSMS.common.util.BillingManager
+import com.moez.QKSMS.feature.backup.BackupController
 import com.moez.QKSMS.feature.main.conversations.ConversationsController
 import com.moez.QKSMS.feature.settings.SettingsController
 import com.moez.QKSMS.interactor.MarkAllSeen
 import com.moez.QKSMS.interactor.MigratePreferences
 import com.moez.QKSMS.interactor.SyncMessages
+import com.moez.QKSMS.manager.AnalyticsManager
 import com.moez.QKSMS.manager.PermissionManager
 import com.moez.QKSMS.manager.RatingManager
 import com.moez.QKSMS.model.SyncLog
@@ -47,6 +49,7 @@ class MainViewModel @Inject constructor(
         markAllSeen: MarkAllSeen,
         migratePreferences: MigratePreferences,
         syncRepository: SyncRepository,
+        private val analytics: AnalyticsManager,
         private val navigator: Navigator,
         private val permissionManager: PermissionManager,
         private val routerProvider: RouterProvider,
@@ -129,7 +132,6 @@ class MainViewModel @Inject constructor(
 
         view.drawerItemSelected()
                 .doOnNext { newState { copy(drawerOpen = false) } }
-                .doOnNext { if (it == DrawerItem.BACKUP) navigator.showBackup() }
                 .doOnNext { if (it == DrawerItem.SCHEDULED) navigator.showScheduled() }
                 .doOnNext { if (it == DrawerItem.BLOCKING) navigator.showBlockedConversations() }
                 .doOnNext { if (it == DrawerItem.PLUS) navigator.showQksmsPlusActivity("main_menu") }
@@ -147,6 +149,12 @@ class MainViewModel @Inject constructor(
                                 RouterTransaction.with(ConversationsController(true))
                                         .popChangeHandler(FadeChangeHandler())
                                         .pushChangeHandler(FadeChangeHandler()))
+
+                        DrawerItem.BACKUP -> router.pushController(
+                                RouterTransaction.with(BackupController())
+                                        .popChangeHandler(FadeChangeHandler())
+                                        .pushChangeHandler(FadeChangeHandler()))
+                                .also { analytics.track("Viewed Backup") }
 
                         DrawerItem.SETTINGS -> router.pushController(
                                 RouterTransaction.with(SettingsController())

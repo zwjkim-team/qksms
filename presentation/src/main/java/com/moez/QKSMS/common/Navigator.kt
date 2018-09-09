@@ -30,7 +30,6 @@ import android.provider.Settings
 import android.provider.Telephony
 import android.view.View
 import com.moez.QKSMS.BuildConfig
-import com.moez.QKSMS.feature.backup.BackupActivity
 import com.moez.QKSMS.feature.blocked.BlockedActivity
 import com.moez.QKSMS.feature.gallery.GalleryActivity
 import com.moez.QKSMS.feature.main.MainActivity
@@ -116,11 +115,6 @@ class Navigator @Inject constructor(
 
         val options = ActivityOptions.makeSceneTransitionAnimation(from, view, view.transitionName)
         from.startActivity(intent, options.toBundle())
-    }
-
-    fun showBackup() {
-        analyticsManager.track("Viewed Backup")
-        startActivity(Intent(context, BackupActivity::class.java))
     }
 
     fun showScheduled() {
