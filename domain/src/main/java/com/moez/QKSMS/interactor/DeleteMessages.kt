@@ -21,7 +21,6 @@ package com.moez.QKSMS.interactor
 import com.moez.QKSMS.manager.NotificationManager
 import com.moez.QKSMS.repository.ConversationRepository
 import com.moez.QKSMS.repository.MessageRepository
-import io.reactivex.Flowable
 import javax.inject.Inject
 
 class DeleteMessages @Inject constructor(
@@ -33,14 +32,15 @@ class DeleteMessages @Inject constructor(
 
     data class Params(val messageIds: List<Long>, val threadId: Long? = null)
 
-    override fun buildObservable(params: Params): Flowable<*> {
-        return Flowable.just(params.messageIds.toLongArray())
-                .doOnNext { messageIds -> messageRepo.deleteMessages(*messageIds) } // Delete the messages
-                .doOnNext {
-                    params.threadId?.let { conversationRepo.updateConversations(it) } // Update the conversation
-                }
-                .doOnNext { params.threadId?.let { notificationManager.update(it) } }
-                .flatMap { updateBadge.buildObservable(Unit) } // Update the badge
+    override suspend fun execute(params: Params) {
+        messageRepo.deleteMessages(*params.messageIds.toLongArray())
+
+        params.threadId?.let { threadId ->
+            conversationRepo.updateConversations(threadId)
+            notificationManager.update(threadId)
+        }
+
+        updateBadge.execute(Unit)
     }
 
 }

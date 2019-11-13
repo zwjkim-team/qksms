@@ -27,6 +27,9 @@ import androidx.annotation.RequiresApi
 import com.moez.QKSMS.interactor.SyncMessages
 import com.moez.QKSMS.util.Preferences
 import dagger.android.AndroidInjection
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class DefaultSmsChangedReceiver : BroadcastReceiver() {
@@ -38,9 +41,14 @@ class DefaultSmsChangedReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         AndroidInjection.inject(this, context)
 
-        if (intent.getBooleanExtra(Telephony.Sms.Intents.EXTRA_IS_DEFAULT_SMS_APP, false)) {
-            val pendingResult = goAsync()
-            syncMessages.execute(Unit) { pendingResult.finish() }
+        if (!intent.getBooleanExtra(Telephony.Sms.Intents.EXTRA_IS_DEFAULT_SMS_APP, false)) {
+            return
+        }
+
+        val pendingResult = goAsync()
+        GlobalScope.launch(Dispatchers.Default) {
+            syncMessages.execute(Unit)
+            pendingResult.finish()
         }
     }
 

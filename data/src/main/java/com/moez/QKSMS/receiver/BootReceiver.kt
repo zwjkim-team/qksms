@@ -21,19 +21,28 @@ package com.moez.QKSMS.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.moez.QKSMS.interactor.RecreateNotifications
 import com.moez.QKSMS.interactor.UpdateScheduledMessageAlarms
 import dagger.android.AndroidInjection
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class BootReceiver : BroadcastReceiver() {
 
     @Inject lateinit var updateScheduledMessageAlarms: UpdateScheduledMessageAlarms
+    @Inject lateinit var recreateNotifications: RecreateNotifications
 
     override fun onReceive(context: Context, intent: Intent?) {
         AndroidInjection.inject(this, context)
 
         val result = goAsync()
-        updateScheduledMessageAlarms.execute(Unit) { result.finish() }
+        GlobalScope.launch(Dispatchers.Default) {
+            updateScheduledMessageAlarms.execute(Unit)
+            recreateNotifications.execute(Unit)
+            result.finish()
+        }
     }
 
 }

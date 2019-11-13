@@ -23,6 +23,9 @@ import android.content.Context
 import android.content.Intent
 import com.moez.QKSMS.interactor.DeleteMessages
 import dagger.android.AndroidInjection
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class DeleteMessagesReceiver : BroadcastReceiver() {
@@ -33,9 +36,12 @@ class DeleteMessagesReceiver : BroadcastReceiver() {
         AndroidInjection.inject(this, context)
 
         val pendingResult = goAsync()
-        val threadId = intent.getLongExtra("threadId", 0)
-        val messageIds = intent.getLongArrayExtra("messageIds")
-        deleteMessages.execute(DeleteMessages.Params(messageIds.toList(), threadId)) { pendingResult.finish() }
+        GlobalScope.launch(Dispatchers.Default) {
+            val threadId = intent.getLongExtra("threadId", 0)
+            val messageIds = intent.getLongArrayExtra("messageIds") ?: longArrayOf()
+            deleteMessages.execute(DeleteMessages.Params(messageIds.toList(), threadId))
+            pendingResult.finish()
+        }
     }
 
 }

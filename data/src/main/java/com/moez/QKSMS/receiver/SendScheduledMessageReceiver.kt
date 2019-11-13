@@ -24,6 +24,9 @@ import android.content.Intent
 import com.moez.QKSMS.interactor.SendScheduledMessage
 import com.moez.QKSMS.repository.MessageRepository
 import dagger.android.AndroidInjection
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class SendScheduledMessageReceiver : BroadcastReceiver() {
@@ -34,9 +37,11 @@ class SendScheduledMessageReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         AndroidInjection.inject(this, context)
 
-        intent.getLongExtra("id", -1L).takeIf { it >= 0 }?.let { id ->
-            val result = goAsync()
-            sendScheduledMessage.execute(id) { result.finish() }
+        val id = intent.getLongExtra("id", -1L).takeIf { it >= 0 } ?: return
+        val result = goAsync()
+        GlobalScope.launch(Dispatchers.Default) {
+            sendScheduledMessage.execute(id)
+            result.finish()
         }
     }
 

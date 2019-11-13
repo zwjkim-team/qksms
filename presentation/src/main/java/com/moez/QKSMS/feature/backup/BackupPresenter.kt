@@ -127,7 +127,7 @@ class BackupPresenter @Inject constructor(
                     when {
                         !upgraded -> navigator.showQksmsPlusActivity("backup_fab")
                         !permissionManager.hasStorage() -> view.requestStoragePermission()
-                        upgraded -> performBackup.execute(Unit)
+                        upgraded -> performBackup.launch(Unit)
                     }
                 }
     }

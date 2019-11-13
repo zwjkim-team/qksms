@@ -20,11 +20,9 @@ package com.moez.QKSMS.interactor
 
 import android.content.Context
 import com.moez.QKSMS.compat.TelephonyCompat
-import com.moez.QKSMS.extensions.mapNotNull
 import com.moez.QKSMS.model.Attachment
 import com.moez.QKSMS.repository.ConversationRepository
 import com.moez.QKSMS.repository.MessageRepository
-import io.reactivex.Flowable
 import javax.inject.Inject
 
 class SendMessage @Inject constructor(
@@ -43,27 +41,30 @@ class SendMessage @Inject constructor(
         val delay: Int = 0
     )
 
-    override fun buildObservable(params: Params): Flowable<*> = Flowable.just(Unit)
-            .filter { params.addresses.isNotEmpty() }
-            .doOnNext {
-                // If a threadId isn't provided, try to obtain one
-                val threadId = when (params.threadId) {
-                    0L -> TelephonyCompat.getOrCreateThreadId(context, params.addresses.toSet())
-                    else -> params.threadId
-                }
-                messageRepo.sendMessage(params.subId, threadId, params.addresses, params.body, params.attachments,
-                        params.delay)
-            }
-            .mapNotNull {
-                // If the threadId wasn't provided, then it's probably because it doesn't exist in Realm.
-                // Sync it now and get the id
-                when (params.threadId) {
-                    0L -> conversationRepo.getOrCreateConversation(params.addresses)?.id
-                    else -> params.threadId
-                }
-            }
-            .doOnNext { threadId -> conversationRepo.updateConversations(threadId) }
-            .doOnNext { threadId -> conversationRepo.markUnarchived(threadId) }
-            .flatMap { updateBadge.buildObservable(Unit) } // Update the widget
+    override suspend fun execute(params: Params) {
+        if (params.addresses.isEmpty()) {
+            return
+        }
+
+        // If a threadId isn't provided, try to obtain one
+        val threadId = when (params.threadId) {
+            0L -> TelephonyCompat.getOrCreateThreadId(context, params.addresses.toSet())
+            else -> params.threadId
+        }
+
+        messageRepo.sendMessage(params.subId, threadId, params.addresses, params.body, params.attachments, params.delay)
+
+        // If the threadId wasn't provided, then it's probably because it doesn't exist in Realm.
+        // Sync it now and get the id
+        when (params.threadId) {
+            0L -> conversationRepo.getOrCreateConversation(params.addresses)?.id
+            else -> params.threadId
+        }
+
+        conversationRepo.updateConversations(threadId)
+        conversationRepo.markUnarchived(threadId)
+
+        updateBadge.execute(Unit)
+    }
 
 }

@@ -25,6 +25,7 @@ import android.telephony.TelephonyManager
 import com.moez.QKSMS.interactor.SendMessage
 import com.moez.QKSMS.repository.ConversationRepository
 import dagger.android.AndroidInjection
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 class HeadlessSmsSendService : IntentService("HeadlessSmsSendService") {
@@ -33,13 +34,18 @@ class HeadlessSmsSendService : IntentService("HeadlessSmsSendService") {
     @Inject lateinit var sendMessage: SendMessage
 
     override fun onHandleIntent(intent: Intent?) {
-        if (intent?.action != TelephonyManager.ACTION_RESPOND_VIA_MESSAGE) return
-
         AndroidInjection.inject(this)
-        intent.extras?.getString(Intent.EXTRA_TEXT)?.takeIf { it.isNotBlank() }?.let { body ->
-            val intentUri = intent.data
-            val recipients = intentUri?.let(::getRecipients)?.split(";") ?: return@let
-            val threadId = conversationRepo.getOrCreateConversation(recipients)?.id ?: 0L
+
+        if (intent?.action != TelephonyManager.ACTION_RESPOND_VIA_MESSAGE) {
+            return
+        }
+
+        val body = intent.extras?.getString(Intent.EXTRA_TEXT)?.takeIf { it.isNotBlank() } ?: return
+        val intentUri = intent.data
+        val recipients = intentUri?.let(::getRecipients)?.split(";") ?: return
+        val threadId = conversationRepo.getOrCreateConversation(recipients)?.id ?: 0L
+
+        runBlocking {
             sendMessage.execute(SendMessage.Params(-1, threadId, recipients, body))
         }
     }

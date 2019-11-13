@@ -68,9 +68,6 @@ class QkReplyViewModel @Inject constructor(
             BehaviorSubject.createDefault(messageRepo.getUnreadMessages(threadId))
 
     init {
-        disposables += markRead
-        disposables += sendMessage
-
         // When the set of messages changes, update the state
         // If we're ever showing an empty set of messages, then it's time to shut down to activity
         disposables += Observables
@@ -114,7 +111,7 @@ class QkReplyViewModel @Inject constructor(
                 .filter { id -> id == R.id.read }
                 .autoDisposable(view.scope())
                 .subscribe {
-                    markRead.execute(listOf(threadId)) { newState { copy(hasError = true) } }
+                    markRead.launch(listOf(threadId)) { newState { copy(hasError = true) } }
                 }
 
         // Call
@@ -149,7 +146,7 @@ class QkReplyViewModel @Inject constructor(
                 .map { messageRepo.getUnreadMessages(threadId).map { it.id } }
                 .map { messages -> DeleteMessages.Params(messages, threadId) }
                 .autoDisposable(view.scope())
-                .subscribe { deleteMessages.execute(it) { newState { copy(hasError = true) } } }
+                .subscribe { deleteMessages.launch(it) { newState { copy(hasError = true) } } }
 
         // View conversation
         view.menuItemIntent
@@ -213,11 +210,11 @@ class QkReplyViewModel @Inject constructor(
                 .withLatestFrom(state, conversation) { body, state, conversation ->
                     val subId = state.subscription?.subscriptionId ?: -1
                     val addresses = conversation.recipients.map { it.address }
-                    sendMessage.execute(SendMessage.Params(subId, threadId, addresses, body))
+                    sendMessage.launch(SendMessage.Params(subId, threadId, addresses, body))
                     view.setDraft("")
                 }
                 .doOnNext {
-                    markRead.execute(listOf(threadId)) { newState { copy(hasError = true) } }
+                    markRead.launch(listOf(threadId)) { newState { copy(hasError = true) } }
                 }
                 .autoDisposable(view.scope())
                 .subscribe()

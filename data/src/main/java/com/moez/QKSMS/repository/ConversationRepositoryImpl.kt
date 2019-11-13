@@ -179,6 +179,14 @@ class ConversationRepositoryImpl @Inject constructor(
                 .findAllAsync()
     }
 
+    override fun getUnreadUnseenConversations(): RealmResults<Conversation> {
+        return Realm.getDefaultInstance()
+                .where(Conversation::class.java)
+                .equalTo("lastMessage.read", false)
+                .equalTo("lastMessage.seen", false)
+                .findAll()
+    }
+
     override fun getConversationAsync(threadId: Long): Conversation {
         return Realm.getDefaultInstance()
                 .where(Conversation::class.java)

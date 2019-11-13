@@ -19,7 +19,6 @@
 package com.moez.QKSMS.interactor
 
 import com.moez.QKSMS.repository.ScheduledMessageRepository
-import io.reactivex.Flowable
 import javax.inject.Inject
 
 class AddScheduledMessage @Inject constructor(
@@ -36,13 +35,11 @@ class AddScheduledMessage @Inject constructor(
         val attachments: List<String>
     )
 
-    override fun buildObservable(params: Params): Flowable<*> {
-        return Flowable.just(params)
-                .map {
-                    scheduledMessageRepo.saveScheduledMessage(it.date, it.subId, it.recipients, it.sendAsGroup, it.body,
-                            it.attachments)
-                }
-                .flatMap { updateScheduledMessageAlarms.buildObservable(Unit) }
+    override suspend fun execute(params: Params) {
+        scheduledMessageRepo.saveScheduledMessage(params.date, params.subId, params.recipients, params.sendAsGroup,
+                params.body, params.attachments)
+
+        updateScheduledMessageAlarms.execute(Unit)
     }
 
 }

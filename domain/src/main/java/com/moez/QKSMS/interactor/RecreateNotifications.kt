@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Moez Bhatti <moez.bhatti@gmail.com>
+ * Copyright (C) 2019 Moez Bhatti <moez.bhatti@gmail.com>
  *
  * This file is part of QKSMS.
  *
@@ -18,15 +18,20 @@
  */
 package com.moez.QKSMS.interactor
 
-import com.moez.QKSMS.repository.BackupRepository
+import com.moez.QKSMS.manager.NotificationManager
+import com.moez.QKSMS.repository.ConversationRepository
 import javax.inject.Inject
 
-class PerformRestore @Inject constructor(
-    private val backupRepo: BackupRepository
-) : Interactor<String>() {
+class RecreateNotifications @Inject constructor(
+    private val conversationRepo: ConversationRepository,
+    private val notificationManager: NotificationManager
+) : Interactor<Unit>() {
 
-    override suspend fun execute(params: String) {
-        backupRepo.performRestore(params)
+    override suspend fun execute(params: Unit) {
+        // Map to ids so that we're no longer iterating through a Realm list
+        conversationRepo.getUnreadUnseenConversations()
+                .map { conversation -> conversation.id }
+                .forEach(notificationManager::update)
     }
 
 }

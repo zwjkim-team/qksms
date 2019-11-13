@@ -76,10 +76,6 @@ class ConversationInfoPresenter @Inject constructor(
                 .filter { conversation -> conversation.id != 0L }
                 .subscribe(conversation::onNext)
 
-        disposables += markArchived
-        disposables += markUnarchived
-        disposables += deleteConversations
-
         val partsObservable = messageRepo.getPartsForConversation(threadId)
                 .asObservable()
                 .filter { parts -> parts.isLoaded && parts.isValid}
@@ -157,8 +153,8 @@ class ConversationInfoPresenter @Inject constructor(
                 .autoDisposable(view.scope())
                 .subscribe { conversation ->
                     when (conversation.archived) {
-                        true -> markUnarchived.execute(listOf(conversation.id))
-                        false -> markArchived.execute(listOf(conversation.id))
+                        true -> markUnarchived.launch(listOf(conversation.id))
+                        false -> markArchived.launch(listOf(conversation.id))
                     }
                 }
 
@@ -178,7 +174,7 @@ class ConversationInfoPresenter @Inject constructor(
         view.confirmDelete()
                 .withLatestFrom(conversation) { _, conversation -> conversation }
                 .autoDisposable(view.scope())
-                .subscribe { conversation -> deleteConversations.execute(listOf(conversation.id)) }
+                .subscribe { conversation -> deleteConversations.launch(listOf(conversation.id)) }
 
         // Media
         view.mediaClicks()

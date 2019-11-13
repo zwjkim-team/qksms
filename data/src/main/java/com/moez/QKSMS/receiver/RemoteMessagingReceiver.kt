@@ -28,6 +28,9 @@ import com.moez.QKSMS.interactor.SendMessage
 import com.moez.QKSMS.repository.ConversationRepository
 import com.moez.QKSMS.repository.MessageRepository
 import dagger.android.AndroidInjection
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class RemoteMessagingReceiver : BroadcastReceiver() {
@@ -45,8 +48,7 @@ class RemoteMessagingReceiver : BroadcastReceiver() {
         val bundle = intent.extras ?: return
 
         val threadId = bundle.getLong("threadId")
-        val body = remoteInput.getCharSequence("body").toString()
-        markRead.execute(listOf(threadId))
+        val body = remoteInput.getCharSequence("body")?.toString().orEmpty()
 
         val lastMessage = messageRepo.getMessages(threadId).lastOrNull()
         val subId = subscriptionManager.activeSubscriptionInfoList
@@ -54,7 +56,11 @@ class RemoteMessagingReceiver : BroadcastReceiver() {
                 ?.subscriptionId ?: -1
         val addresses = conversationRepo.getConversation(threadId)?.recipients?.map { it.address } ?: return
 
-        val pendingRepository = goAsync()
-        sendMessage.execute(SendMessage.Params(subId, threadId, addresses, body)) { pendingRepository.finish() }
+        val pendingResult = goAsync()
+        GlobalScope.launch(Dispatchers.Default) {
+            markRead.execute(listOf(threadId))
+            sendMessage.execute(SendMessage.Params(subId, threadId, addresses, body))
+            pendingResult.finish()
+        }
     }
 }

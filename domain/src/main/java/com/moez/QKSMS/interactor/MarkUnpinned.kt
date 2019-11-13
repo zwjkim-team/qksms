@@ -20,7 +20,6 @@ package com.moez.QKSMS.interactor
 
 import com.moez.QKSMS.manager.ShortcutManager
 import com.moez.QKSMS.repository.ConversationRepository
-import io.reactivex.Flowable
 import javax.inject.Inject
 
 class MarkUnpinned @Inject constructor(
@@ -29,11 +28,10 @@ class MarkUnpinned @Inject constructor(
     private val shortcutManager: ShortcutManager
 ) : Interactor<List<Long>>() {
 
-    override fun buildObservable(params: List<Long>): Flowable<*> {
-        return Flowable.just(params.toLongArray())
-                .doOnNext { threadIds -> conversationRepo.markUnpinned(*threadIds) }
-                .doOnNext { shortcutManager.updateShortcuts() } // Update shortcuts
-                .flatMap { updateBadge.buildObservable(Unit) } // Update the badge and widget
+    override suspend fun execute(params: List<Long>) {
+        conversationRepo.markUnpinned(*params.toLongArray())
+        shortcutManager.updateShortcuts()
+        updateBadge.execute(Unit)
     }
 
 }

@@ -19,14 +19,14 @@
 package com.moez.QKSMS.interactor
 
 import com.moez.QKSMS.repository.MessageRepository
-import io.reactivex.Flowable
 import javax.inject.Inject
 
-class MarkDelivered @Inject constructor(private val messageRepo: MessageRepository) : Interactor<Long>() {
+class MarkDelivered @Inject constructor(
+    private val messageRepo: MessageRepository
+) : Interactor<Long>() {
 
-    override fun buildObservable(params: Long): Flowable<Unit> {
-        return Flowable.just(Unit)
-                .doOnNext { messageRepo.markDelivered(params) }
+    override suspend fun execute(params: Long) {
+        messageRepo.markDelivered(params)
     }
 
 }

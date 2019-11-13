@@ -129,8 +129,6 @@ class SettingsPresenter @Inject constructor(
                 .sample(16, TimeUnit.MILLISECONDS)
                 .distinctUntilChanged()
                 .subscribe { syncProgress -> newState { copy(syncProgress = syncProgress) } }
-
-        disposables += syncMessages
     }
 
     override fun bindIntents(view: SettingsView) {
@@ -187,7 +185,7 @@ class SettingsPresenter @Inject constructor(
 
                         R.id.mmsSize -> view.showMmsSizePicker()
 
-                        R.id.sync -> syncMessages.execute(Unit)
+                        R.id.sync -> syncMessages.launch(Unit)
 
                         R.id.about -> view.showAbout()
                     }

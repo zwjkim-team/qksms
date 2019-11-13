@@ -339,7 +339,7 @@ class ComposeViewModel @Inject constructor(
                 .filter { it == R.id.delete }
                 .filter { permissionManager.isDefaultSms().also { if (!it) view.requestDefaultSms() } }
                 .withLatestFrom(view.messagesSelectedIntent, conversation) { _, messages, conversation ->
-                    deleteMessages.execute(DeleteMessages.Params(messages, conversation.id))
+                    deleteMessages.launch(DeleteMessages.Params(messages, conversation.id))
                 }
                 .autoDisposable(view.scope())
                 .subscribe { view.clearSelection() }
@@ -409,7 +409,7 @@ class ComposeViewModel @Inject constructor(
         view.messageClickIntent
                 .mapNotNull(messageRepo::getMessage)
                 .filter { message -> message.isFailedMessage() }
-                .doOnNext { message -> retrySending.execute(message.id) }
+                .doOnNext { message -> retrySending.launch(message.id) }
                 .autoDisposable(view.scope())
                 .subscribe()
 
@@ -444,7 +444,7 @@ class ComposeViewModel @Inject constructor(
                 .mapNotNull(messageRepo::getMessage)
                 .doOnNext { message -> view.setDraft(message.getText()) }
                 .autoDisposable(view.scope())
-                .subscribe { message -> cancelMessage.execute(message.id) }
+                .subscribe { message -> cancelMessage.launch(message.id) }
 
         // Set the current conversation
         Observables
@@ -457,7 +457,7 @@ class ComposeViewModel @Inject constructor(
                     when (visible) {
                         true -> {
                             activeConversationManager.setActiveConversation(threadId)
-                            markRead.execute(listOf(threadId))
+                            markRead.launch(listOf(threadId))
                         }
 
                         false -> activeConversationManager.setActiveConversation(null)
@@ -647,26 +647,25 @@ class ComposeViewModel @Inject constructor(
                                     .map { it.toString() }
                             val params = AddScheduledMessage
                                     .Params(state.scheduled, subId, addresses, state.sendAsGroup, body, uris)
-                            addScheduledMessage.execute(params)
+                            addScheduledMessage.launch(params)
                             context.makeToast(R.string.compose_scheduled_toast)
                         }
 
                         // Sending a group message
                         state.sendAsGroup -> {
-                            sendMessage.execute(SendMessage
+                            sendMessage.launch(SendMessage
                                     .Params(subId, conversation.id, addresses, body, attachments, delay))
                         }
 
                         // Sending a message to an existing conversation with one recipient
                         conversation.recipients.size == 1 -> {
                             val address = conversation.recipients.map { it.address }
-                            sendMessage.execute(SendMessage.Params(subId, threadId, address, body, attachments, delay))
+                            sendMessage.launch(SendMessage.Params(subId, threadId, address, body, attachments, delay))
                         }
 
                         // Create a new conversation with one address
                         addresses.size == 1 -> {
-                            sendMessage.execute(SendMessage
-                                    .Params(subId, threadId, addresses, body, attachments, delay))
+                            sendMessage.launch(SendMessage.Params(subId, threadId, addresses, body, attachments, delay))
                         }
 
                         // Send a message to multiple addresses
@@ -677,7 +676,7 @@ class ComposeViewModel @Inject constructor(
                                 } ?: 0
                                 val address = listOf(conversationRepo
                                         .getConversation(threadId)?.recipients?.firstOrNull()?.address ?: addr)
-                                sendMessage.execute(SendMessage
+                                sendMessage.launch(SendMessage
                                         .Params(subId, threadId, address, body, attachments, delay))
                             }
                         }

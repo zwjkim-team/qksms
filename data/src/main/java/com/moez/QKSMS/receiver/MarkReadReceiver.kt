@@ -23,6 +23,9 @@ import android.content.Context
 import android.content.Intent
 import com.moez.QKSMS.interactor.MarkRead
 import dagger.android.AndroidInjection
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class MarkReadReceiver : BroadcastReceiver() {
@@ -33,8 +36,11 @@ class MarkReadReceiver : BroadcastReceiver() {
         AndroidInjection.inject(this, context)
 
         val pendingResult = goAsync()
-        val threadId = intent.getLongExtra("threadId", 0)
-        markRead.execute(listOf(threadId)) { pendingResult.finish() }
+        GlobalScope.launch(Dispatchers.Default) {
+            val threadId = intent.getLongExtra("threadId", 0)
+            markRead.execute(listOf(threadId))
+            pendingResult.finish()
+        }
     }
 
 }

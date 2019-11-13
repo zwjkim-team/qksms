@@ -25,6 +25,9 @@ import android.content.Intent
 import com.moez.QKSMS.interactor.MarkFailed
 import com.moez.QKSMS.interactor.MarkSent
 import dagger.android.AndroidInjection
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class SmsSentReceiver : BroadcastReceiver() {
@@ -40,12 +43,18 @@ class SmsSentReceiver : BroadcastReceiver() {
         when (resultCode) {
             Activity.RESULT_OK -> {
                 val pendingResult = goAsync()
-                markSent.execute(id) { pendingResult.finish() }
+                GlobalScope.launch(Dispatchers.Default) {
+                    markSent.execute(id)
+                    pendingResult.finish()
+                }
             }
 
             else -> {
                 val pendingResult = goAsync()
-                markFailed.execute(MarkFailed.Params(id, resultCode)) { pendingResult.finish() }
+                GlobalScope.launch(Dispatchers.Default) {
+                    markFailed.execute(MarkFailed.Params(id, resultCode))
+                    pendingResult.finish()
+                }
             }
         }
     }

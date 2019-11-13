@@ -19,7 +19,6 @@
 package com.moez.QKSMS.feature.blocking.messages
 
 import com.moez.QKSMS.R
-import com.moez.QKSMS.blocking.BlockingClient
 import com.moez.QKSMS.common.Navigator
 import com.moez.QKSMS.common.base.QkPresenter
 import com.moez.QKSMS.interactor.DeleteConversations
@@ -31,7 +30,6 @@ import javax.inject.Inject
 
 class BlockedMessagesPresenter @Inject constructor(
     conversationRepo: ConversationRepository,
-    private val blockingClient: BlockingClient,
     private val deleteConversations: DeleteConversations,
     private val navigator: Navigator
 ) : QkPresenter<BlockedMessagesView, BlockedMessagesState>(BlockedMessagesState(
@@ -64,7 +62,7 @@ class BlockedMessagesPresenter @Inject constructor(
         view.confirmDeleteIntent
                 .autoDisposable(view.scope())
                 .subscribe { conversations ->
-                    deleteConversations.execute(conversations)
+                    deleteConversations.launch(conversations)
                     view.clearSelection()
                 }
 

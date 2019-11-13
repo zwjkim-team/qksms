@@ -23,6 +23,9 @@ import android.content.Context
 import android.content.Intent
 import com.moez.QKSMS.interactor.SyncMessage
 import dagger.android.AndroidInjection
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -49,7 +52,10 @@ class SmsProviderChangedReceiver : BroadcastReceiver() {
 
         // Sync the message to our realm
         val pendingResult = goAsync()
-        syncMessage.execute(uri) { pendingResult.finish() }
+        GlobalScope.launch(Dispatchers.Default) {
+            syncMessage.execute(uri)
+            pendingResult.finish()
+        }
     }
 
 }

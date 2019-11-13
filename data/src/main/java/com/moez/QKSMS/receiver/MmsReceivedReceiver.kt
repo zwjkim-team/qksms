@@ -24,6 +24,9 @@ import android.net.Uri
 import com.klinker.android.send_message.MmsReceivedReceiver
 import com.moez.QKSMS.interactor.ReceiveMms
 import dagger.android.AndroidInjection
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class MmsReceivedReceiver : MmsReceivedReceiver() {
@@ -36,9 +39,14 @@ class MmsReceivedReceiver : MmsReceivedReceiver() {
     }
 
     override fun onMessageReceived(messageUri: Uri?) {
-        messageUri?.let { uri ->
-            val pendingResult = goAsync()
-            receiveMms.execute(uri) { pendingResult.finish() }
+        if (messageUri == null) {
+            return
+        }
+
+        val pendingResult = goAsync()
+        GlobalScope.launch(Dispatchers.Default) {
+            receiveMms.execute(messageUri)
+            pendingResult.finish()
         }
     }
 

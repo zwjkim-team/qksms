@@ -24,6 +24,9 @@ import android.content.Intent
 import android.net.Uri
 import com.moez.QKSMS.interactor.SyncMessage
 import dagger.android.AndroidInjection
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class MmsUpdatedReceiver : BroadcastReceiver() {
@@ -37,9 +40,12 @@ class MmsUpdatedReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         AndroidInjection.inject(this, context)
 
-        intent.getStringExtra(URI)?.let { uriString ->
-            val pendingResult = goAsync()
-            syncMessage.execute(Uri.parse(uriString)) { pendingResult.finish() }
+        val uriString = intent.getStringExtra(URI) ?: return
+
+        val pendingResult = goAsync()
+        GlobalScope.launch(Dispatchers.Default) {
+            syncMessage.execute(Uri.parse(uriString))
+            pendingResult.finish()
         }
     }
 

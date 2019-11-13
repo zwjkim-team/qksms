@@ -23,6 +23,9 @@ import android.content.Context
 import android.content.Intent
 import com.moez.QKSMS.interactor.MarkSeen
 import dagger.android.AndroidInjection
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class MarkSeenReceiver : BroadcastReceiver() {
@@ -34,7 +37,10 @@ class MarkSeenReceiver : BroadcastReceiver() {
 
         val pendingResult = goAsync()
         val threadId = intent.getLongExtra("threadId", 0)
-        markSeen.execute(threadId) { pendingResult.finish() }
+        GlobalScope.launch(Dispatchers.Default) {
+            markSeen.execute(threadId)
+            pendingResult.finish()
+        }
     }
 
 }

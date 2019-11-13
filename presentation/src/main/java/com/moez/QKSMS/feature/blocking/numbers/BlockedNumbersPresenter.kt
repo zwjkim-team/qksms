@@ -42,7 +42,7 @@ class BlockedNumbersPresenter @Inject constructor(
                 .doOnNext { id ->
                     blockingRepo.getBlockedNumber(id)?.address
                             ?.let(conversationRepo::getThreadId)
-                            ?.let { threadId -> markUnblocked.execute(listOf(threadId)) }
+                            ?.let { threadId -> markUnblocked.launch(listOf(threadId)) }
                 }
                 .doOnNext(blockingRepo::unblockNumber)
                 .subscribeOn(Schedulers.io())

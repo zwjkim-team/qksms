@@ -31,6 +31,9 @@ import com.google.android.mms.util_alt.SqliteWrapper
 import com.klinker.android.send_message.Transaction
 import com.moez.QKSMS.interactor.SyncMessage
 import dagger.android.AndroidInjection
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.File
 import javax.inject.Inject
@@ -84,9 +87,11 @@ class MmsSentReceiver : BroadcastReceiver() {
         Timber.v(filePath)
         File(filePath).delete()
 
-        Uri.parse(intent.getStringExtra("content_uri"))?.let { uri ->
-            val pendingResult = goAsync()
-            syncMessage.execute(uri) { pendingResult.finish() }
+        val contentUri = Uri.parse(intent.getStringExtra("content_uri")) ?: return
+        val pendingResult = goAsync()
+        GlobalScope.launch(Dispatchers.Default) {
+            syncMessage.execute(contentUri)
+            pendingResult.finish()
         }
     }
 

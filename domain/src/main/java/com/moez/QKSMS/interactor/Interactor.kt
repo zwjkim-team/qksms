@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Moez Bhatti <moez.bhatti@gmail.com>
+ * Copyright (C) 2019 Moez Bhatti <moez.bhatti@gmail.com>
  *
  * This file is part of QKSMS.
  *
@@ -18,34 +18,29 @@
  */
 package com.moez.QKSMS.interactor
 
-import io.reactivex.Flowable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.disposables.Disposable
-import io.reactivex.rxkotlin.plusAssign
-import io.reactivex.schedulers.Schedulers
-import timber.log.Timber
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlin.coroutines.CoroutineContext
 
-abstract class Interactor<in Params> : Disposable {
+abstract class Interactor<in Params> {
 
-    private val disposables: CompositeDisposable = CompositeDisposable()
+    // TODO: Catch errors
 
-    abstract fun buildObservable(params: Params): Flowable<*>
+    abstract suspend fun execute(params: Params)
 
-    fun execute(params: Params, onComplete: () -> Unit = {}) {
-        disposables += buildObservable(params)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .doOnComplete(onComplete)
-                .subscribe({}, Timber::w)
-    }
+    fun launch(
+        params: Params,
+        context: CoroutineContext = Dispatchers.Default,
+        callback: ((Throwable?) -> Unit)? = null
+    ) {
+        val job = GlobalScope.launch(context) {
+            execute(params)
+        }
 
-    override fun dispose() {
-        return disposables.dispose()
-    }
-
-    override fun isDisposed(): Boolean {
-        return disposables.isDisposed
+        if (callback != null) {
+            job.invokeOnCompletion(callback)
+        }
     }
 
 }
