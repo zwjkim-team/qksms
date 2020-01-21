@@ -19,7 +19,6 @@
 package com.moez.QKSMS.interactor
 
 import com.moez.QKSMS.repository.ContactRepository
-import io.reactivex.Flowable
 import javax.inject.Inject
 
 class SetDefaultPhoneNumber @Inject constructor(
@@ -28,11 +27,8 @@ class SetDefaultPhoneNumber @Inject constructor(
 
     data class Params(val lookupKey: String, val phoneNumberId: Long)
 
-    override fun buildObservable(params: Params): Flowable<*> {
-        return Flowable.just(params)
-                .doOnNext { (lookupKey, phoneNumberId) ->
-                    contactRepo.setDefaultPhoneNumber(lookupKey, phoneNumberId)
-                }
+    override suspend fun execute(params: Params) {
+        contactRepo.setDefaultPhoneNumber(params.lookupKey, params.phoneNumberId)
     }
 
 }
