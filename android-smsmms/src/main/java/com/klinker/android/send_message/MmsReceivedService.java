@@ -56,6 +56,7 @@ public class MmsReceivedService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         Log.v(TAG, "MMS has finished downloading, persisting it to the database");
 
+/* zwjkim
         String path = intent.getStringExtra(EXTRA_FILE_PATH);
         Log.v(TAG, path);
 
@@ -94,6 +95,7 @@ public class MmsReceivedService extends IntentService {
             handleHttpError(this, intent);
             DownloadManager.finishDownload(intent.getStringExtra(EXTRA_LOCATION_URL));
         }
+*/
     }
 
     private static void handleHttpError(Context context, Intent intent) {
