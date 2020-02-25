@@ -94,23 +94,19 @@ class Transaction @JvmOverloads constructor(private val context: Context, settin
             val sendFile = File(context.cacheDir, fileName)
 
             val sendReq = buildPdu(context, addresses, subject, parts)
-/* zwjkim
             val persister = PduPersister.getPduPersister(context)
             val messageUri = persister.persist(sendReq, Uri.parse("content://mms/outbox"), true, true, null)
-*/
 
             val sentIntent = Intent(MMS_SENT)
             BroadcastUtils.addClassName(context, sentIntent, MMS_SENT)
 
- //zwjkim           sentIntent.putExtra(EXTRA_CONTENT_URI, messageUri.toString())
+            sentIntent.putExtra(EXTRA_CONTENT_URI, messageUri.toString())
             sentIntent.putExtra(EXTRA_FILE_PATH, sendFile.path)
             val sentPI = PendingIntent.getBroadcast(context, 0, sentIntent, PendingIntent.FLAG_CANCEL_CURRENT)
 
-/* zwjkim
             val updatedIntent = Intent(MMS_UPDATED).putExtra("uri", messageUri.toString())
             BroadcastUtils.addClassName(context, updatedIntent, MMS_UPDATED)
             context.sendBroadcast(updatedIntent)
-*/
 
             val contentUri: Uri? = try {
                 FileOutputStream(sendFile).use { writer ->
