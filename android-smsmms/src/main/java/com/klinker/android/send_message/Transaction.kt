@@ -94,19 +94,32 @@ class Transaction @JvmOverloads constructor(private val context: Context, settin
             val sendFile = File(context.cacheDir, fileName)
 
             val sendReq = buildPdu(context, addresses, subject, parts)
+/* zwjkim https://github.com/klinker41/android-smsmms/pull/121/commits/46a036c85f3690d8507e168bf4633eee1723963e#
             val persister = PduPersister.getPduPersister(context)
             val messageUri = persister.persist(sendReq, Uri.parse("content://mms/outbox"), true, true, null)
+*/
 
             val sentIntent = Intent(MMS_SENT)
             BroadcastUtils.addClassName(context, sentIntent, MMS_SENT)
 
-            sentIntent.putExtra(EXTRA_CONTENT_URI, messageUri.toString())
+ //zwjkim           sentIntent.putExtra(EXTRA_CONTENT_URI, messageUri.toString())
             sentIntent.putExtra(EXTRA_FILE_PATH, sendFile.path)
             val sentPI = PendingIntent.getBroadcast(context, 0, sentIntent, PendingIntent.FLAG_CANCEL_CURRENT)
 
+/* zwjkim
             val updatedIntent = Intent(MMS_UPDATED).putExtra("uri", messageUri.toString())
             BroadcastUtils.addClassName(context, updatedIntent, MMS_UPDATED)
             context.sendBroadcast(updatedIntent)
+*/
+	    //zwjkim
+            if (Utils.isDefaultSmsApp(context)) {
+               val persister = PduPersister.getPduPersister(context)
+               val messageUri = persister.persist(sendReq, Uri.parse("content://mms/outbox"), true, true, null)
+               sentIntent.putExtra(EXTRA_CONTENT_URI, messageUri.toString())
+               val updatedIntent = Intent(MMS_UPDATED).putExtra("uri", messageUri.toString())
+               BroadcastUtils.addClassName(context, updatedIntent, MMS_UPDATED)
+               context.sendBroadcast(updatedIntent)
+            }
 
             val contentUri: Uri? = try {
                 FileOutputStream(sendFile).use { writer ->

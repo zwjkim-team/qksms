@@ -173,11 +173,13 @@ public class TransactionService extends Service implements Observer {
             Log.v(TAG, "Creating TransactionService");
         }
 
-        if (!Utils.isDefaultSmsApp(this)) {
+/* zwjkim
+        if (!Utils.isDefaultSmsApp(this)) { //zwjkim mask onCreate()
             Log.v(TAG, "not default app, so exiting");
             stopSelf();
             return;
         }
+*/
 
         initServiceHandler();
 

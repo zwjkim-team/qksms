@@ -49,10 +49,12 @@ public class MmsSystemEventReceiver extends BroadcastReceiver {
             Log.v(TAG, "Intent received: " + intent);
         }
 
-        if (!Utils.isDefaultSmsApp(context)) {
+/* zwjkim
+        if (!Utils.isDefaultSmsApp(context)) { //zwjkim mask onReceive()
             Log.v(TAG, "not default sms app, cancelling");
             return;
         }
+*/
 
         String action = intent.getAction();
         if (action.equals(Mms.Intents.CONTENT_CHANGED_ACTION)) {
